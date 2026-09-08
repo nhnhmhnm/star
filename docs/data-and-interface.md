@@ -104,3 +104,17 @@ utc/date/time/speed 등의 입력으로 다른 시각의 하늘을 열 수 없�
 MapLightState는 evaluatedAtUtcMs, 태양 위치, nightThresholdDeg(-18 고정), nightTint, nightOpacity를 가진다. nightTint·nightOpacity는 전역 디자인 값이며 관측 가능 좌표별로 달라지지 않는다.
 
 h > -18°의 낮·박명만 연속 밝기 함수로 표현하고 h <= -18°는 같은 상태색을 반환한다. 지도 음영의 투명도와 최종 진입 허용은 별도 값이다. 바탕지도 타일의 지형색과 조작 UI는 보존한다.
+
+## 10. Python API와 웹 계약
+
+백엔드 도입 시 Python + FastAPI의 Pydantic 요청·응답 모델에서 OpenAPI를 내보내 계약을 관리한다. 프론트엔드 TypeScript 타입은 이 명세와 일치시킨다. 입력 좌표·단위·null·오류·기상 유효 시각을 양쪽에서 검증하며 Python 모델 파일을 웹에서 직접 공유하지 않는다.
+
+초기 API 범위는 필요한 기상/검색 중계·키·캐시·요청 제한이다. 현재 시각의 별 좌표를 서버에서 매초 계산·전송하는 API는 추가하지 않는다. 공개 API에는 사용자가 천문 시간을 조작할 필드를 제공하지 않는다.
+
+## 11. 역할 계약과 데이터 모델 구분
+
+MapViewport는 지도 중심·줌 데이터이고 MapController는 지도 조작·선택 이벤트의 역할 계약이다. SearchResult는 데이터, PlaceSearchProvider는 검색 동작 계약이다. 기존 SkyEngine 계약은 StellariumAdapter가 구현한다.
+
+백엔드 WeatherProvider는 정규화된 WeatherSnapshot과 공급자와 독립적인 오류를 반환한다. WeatherService는 제공자·시계 등 필요한 의존성을 인자로 받고 FastAPI 라우터와 외부 응답 필드에 직접 의존하지 않는다. 타입 계약과 런타임 입력 검증을 구분한다.
+
+관측 위치는 웹 상태에만 권위 있게 보관한다. 공유 서버 서비스에는 사용자별 현재 위치를 저장하지 않는다. 불필요하게 데이터 모델과 동일한 클래스를 여러 계층에 복제하지 않는다. [객체지향 설계](./object-oriented-design.md)

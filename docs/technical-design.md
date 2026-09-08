@@ -7,6 +7,9 @@
 | 영역 | 제안 | 책임 |
 |---|---|---|
 | 앱 | React + TypeScript + Vite | 화면·선택 위치·오류 상태 |
+| 백엔드 | Python + FastAPI, 필요할 때 도입 | 기상/검색 중계·비밀 키·공통 캐시·호출 제한 |
+| API 계약 | Pydantic + OpenAPI | 언어와 독립적인 HTTP·JSON 요청/응답 |
+| API 개발 도구 | uv·Ruff·pytest | Python 의존성 고정·린트·테스트 |
 | 하늘 | Stellarium Web Engine | 현재 UTC·위치·시선 기반 천문 렌더링 |
 | 지도·검색 우선 후보 | Google Maps JavaScript API + Places의 새 검색 기능 | 일반 지도 조작·장소 검색·결과 이동 |
 | 지도 대안 | Leaflet + 호환 타일·검색 제공자 | 동일 UX, 검색 범위·이용 조건 별도 검증 |
@@ -125,3 +128,19 @@ Google Maps/Places 선택 시 결제 계정·API 키·호출 과금과 제한 �
 대기 효과를 기본 켜고 유지한다. 확인한 공식 소스에서는 태양·달 위치와 밝기, 대기·광공해 설정이 렌더링에 쓰인다. 실제 기상 조회·현지 광공해 자동 반영과 구분한다. [공식 대기 소스](https://github.com/Stellarium/stellarium-web-engine/blob/master/src/modules/atmosphere.c)
 
 제품 진입은 -18° 이하로 제한하므로 밝은 박명 화면은 제공하지 않는다. 그렇더라도 모든 밤을 동일 RGB로 보정하지 않고 엔진의 자연스러운 밝기 차이를 유지한다. 기본 검정 CSS 배경은 로딩 배경일 수 있으나 최종 하늘 색을 규정하지 않는다.
+
+## 11. 언어와 개발 순서 확정
+
+2026-09-08 사용자 선택으로 백엔드는 Python + FastAPI를 사용한다. 프론트엔드는 TypeScript + React + Vite를 유지한다. Node.js는 웹 개발 도구용이며 API 서버의 언어 선택과 구분한다. 서버 도입 시점은 외부 API 운영 요구에 따라 정하고 초기 DB는 추가하지 않는다.
+
+웹과 API의 공통 타입을 TypeScript 패키지로 강제하지 않는다. FastAPI 모델에서 내보낸 OpenAPI 명세와 계약 검증으로 연결한다. 웹/API 의존성은 npm과 uv로 따로 관리한다. [개발 가이드](./development-guide.md)
+
+엔진 최소 검증 후 정식 화면은 메인 지도에서 밤하늘 페이지 순서로 만든다. 각 기능의 구현·검증을 하나의 목적을 가진 커밋으로 남긴다. [커밋별 구현 계획](./implementation-plan.md)
+
+## 12. 객체지향과 의존성 방향
+
+지도는 MapController, 검색은 PlaceSearchProvider, 하늘은 SkyEngine 계약을 두고 선택한 SDK의 구현을 어댑터 안에 격리한다. UI/Hook은 계약을 사용하고 조립 지점만 실제 구현을 선택한다. React 화면은 함수 컴포넌트이며 밤 판정·좌표·시간 변환은 순수 함수다.
+
+백엔드는 FastAPI Router → WeatherService → WeatherProvider 계약으로 의존하고 OpenMeteoProvider는 이를 구현한다. Depends는 프레임워크 경계의 조립에 사용하고 서비스는 HTTP나 FastAPI 타입에 직접 의존하지 않는다. Python Protocol은 제공자 타입 계약, Pydantic은 입력·응답 검증에 사용한다.
+
+공유 서비스에 사용자 위치를 저장하지 않고 요청 인자로 전달한다. 엔진·지도·HTTP 연결의 생성/해제 책임을 명시한다. DB 계층·범용 BaseService·깊은 상속은 현재 범위에 추가하지 않는다. [객체지향 설계와 변경 예시](./object-oriented-design.md)

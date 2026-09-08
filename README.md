@@ -25,11 +25,13 @@
 2. [기술 설계](./docs/technical-design.md)
 3. [UI·UX 명세](./docs/ui-ux-spec.md)
 4. [데이터·인터페이스](./docs/data-and-interface.md)
-5. [향후 구현 계획](./docs/implementation-plan.md)
+5. [커밋별 구현 계획](./docs/implementation-plan.md)
 6. [향후 검증 계획](./docs/test-plan.md)
 7. [결정·위험 관리](./docs/decisions-and-risks.md)
 8. [검토 결과·공식 근거](./docs/review-and-sources.md)
 9. [기상 반영 검토안](./docs/weather-integration.md)
+10. [개발 언어·진행 방식·커밋 규칙](./docs/development-guide.md)
+11. [객체지향 설계와 변경 경계](./docs/object-oriented-design.md)
 
 이전 검토의 낮 진입 허용·시간 조절·직접 좌표 입력안은 현재 제품 방향에서 제외했다.
 
@@ -38,3 +40,13 @@
 메인 지도는 낮 중심부가 밝고 박명까지 부드럽게 어두워진다. **태양 고도 -18° 이하의 모든 관측 가능 영역에는 동일한 밤 색상·투명도**를 적용한다. 밤 안에서 추가 밝기 차이를 주지 않으며 지명·도로·마커의 가독성을 유지한다.
 
 하늘 뷰어는 이 지도 색과 별개다. 대기를 켠 Stellarium 렌더링을 사용하므로 밤 배경이 항상 같은 검정은 아니며 태양·달·대기 설정에 따른 차이를 유지한다.
+
+## 앞으로의 개발 기준
+
+프론트엔드는 **TypeScript + React + Vite**, 필요한 백엔드는 사용자가 선택한 **Python + FastAPI**를 사용한다. 웹과 API는 HTTP·JSON으로 연결하고 초기 데이터베이스는 도입하지 않는다.
+
+저장소는 **docs / backend / frontend**로 나눈다. docs는 기획·설계, backend는 Python API, frontend는 웹 화면과 Stellarium 연결을 맡는다. Git은 루트 하나에서 관리하고 각 앱의 의존성·실행·배포는 분리한다. [내부 폴더 배치와 계약 관리](./docs/development-guide.md#3-저장소-구조)
+
+진행 순서는 `엔진 최소 검증 → 메인 세계지도 → 밤하늘 상세 페이지 → 기상·필요 시 API → 품질 검증`이다. 한 기능 단위를 구현·검증한 뒤 `feat(map): 세계지도 확대와 이동 기능 추가`처럼 타입·scope는 영어, 설명·본문은 한글로 커밋한다. 구체적인 범위·완료 기준·예정 메시지는 커밋별 구현 계획을 따른다.
+
+유지보수는 역할별 인터페이스·의존성 주입·합성을 기준으로 설계한다. 지도·엔진·기상 연동은 어댑터로 분리하고, React 화면은 함수 컴포넌트, 밤 판정·좌표 변환은 순수 함수로 유지한다. [객체지향 설계](./docs/object-oriented-design.md)
