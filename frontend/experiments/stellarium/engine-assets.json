@@ -1,0 +1,43 @@
+{
+  "engine": {
+    "sourceRepository": "https://github.com/Stellarium/stellarium-web-engine.git",
+    "commit": "e7201246bdf7289c50a3ec59e98f69f0f9383b05",
+    "scriptUrl": "/stellarium-engine/stellarium-web-engine.js",
+    "wasmUrl": "/stellarium-engine/stellarium-web-engine.wasm"
+  },
+  "dataBaseUrl": "/stellarium-skydata/",
+  "fontBaseUrl": "/stellarium-fonts/",
+  "requiredDataSources": [
+    {
+      "name": "stars",
+      "url": "/stellarium-skydata/stars",
+      "requiredForFirstExperiment": true
+    },
+    {
+      "name": "western-skyculture",
+      "url": "/stellarium-skydata/skycultures/western",
+      "requiredForFirstExperiment": true
+    },
+    {
+      "name": "moon",
+      "url": "/stellarium-skydata/surveys/sso/moon",
+      "requiredForFirstExperiment": true
+    },
+    {
+      "name": "sun",
+      "url": "/stellarium-skydata/surveys/sso/sun",
+      "requiredForFirstExperiment": true
+    },
+    {
+      "name": "dso",
+      "url": "/stellarium-skydata/dso",
+      "requiredForFirstExperiment": false
+    },
+    {
+      "name": "milkyway",
+      "url": "/stellarium-skydata/surveys/milkyway",
+      "requiredForFirstExperiment": false
+    }
+  ],
+  "fonts": ["/stellarium-fonts/Roboto-Regular.ttf", "/stellarium-fonts/Roboto-Bold.ttf"]
+}
