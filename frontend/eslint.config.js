@@ -9,6 +9,7 @@ export default tseslint.config(
   },
   js.configs.recommended,
   tseslint.configs.recommended,
+  // commitlint 설정 파일은 Node의 CommonJS 환경에서 실행된다.
   {
     files: ['*.cjs'],
     languageOptions: {
