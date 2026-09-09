@@ -25,6 +25,8 @@
 
 FastAPI는 Python 타입 힌트를 활용한 API 작성, 데이터 검증과 OpenAPI 문서화를 제공한다. uv는 Python 프로젝트의 환경·lockfile 관리, Ruff는 Python 린트·포맷에 사용한다. [FastAPI](https://fastapi.tiangolo.com/), [uv 프로젝트](https://docs.astral.sh/uv/guides/projects/), [Ruff](https://docs.astral.sh/ruff/), [API 테스트](https://fastapi.tiangolo.com/tutorial/testing/)
 
+FastAPI-fastkit은 FastAPI 초보자를 위한 프로젝트 생성·기능 선택 도구로 참고할 수 있다. 현재 백엔드는 공개 설정·presence·기상 중계처럼 필요한 기능이 작고 명확하므로 스타터 전체를 가져오지 않고, 필요한 구조나 명령 아이디어만 비교 자료로 삼는다. [FastAPI-fastkit](https://github.com/bnbong/FastAPI-fastkit)
+
 Node.js는 Vite와 웹 도구를 실행하는 용도로 사용한다. Python 서버를 선택해도 웹 개발 도구에는 필요하며 백엔드 런타임으로 사용하는 것은 아니다. Node.js LTS·Python·프레임워크의 지원 조합을 개발 착수 시 확인하고 버전을 고정한다. [Vite 문서](https://vite.dev/guide/), [Node.js 릴리스](https://nodejs.org/en/about/previous-releases)
 
 Java + Spring Boot도 기술적으로 가능한 선택이다. Spring Boot는 독립 실행 가능한 Java 애플리케이션을 제공하며, 기존 Java 경험이나 Spring 기반 운영 환경이 있다면 선택할 이유가 있다. 이번에는 현재의 API 중계 중심 범위와 사용자 선택에 따라 Python + FastAPI로 확정했다. 두 서버를 동시에 구축하지 않는다. [Spring Boot 공식 문서](https://docs.spring.io/spring-boot/index.html)
@@ -77,7 +79,7 @@ star/
 └── README.md                  프로젝트 소개·실행 안내·문서 링크
 ```
 
-사용자가 마련한 docs·backend·frontend의 세 최상위 폴더를 기준으로 한다. 현재 backend·frontend는 빈 폴더이며 위의 내부 구조는 향후 배치안이다. 내부 파일은 해당 기능에 착수할 때 만든다. 백엔드 폴더가 있다는 이유로 서버 도입을 앞당기지는 않는다.
+사용자가 마련한 docs·backend·frontend의 세 최상위 폴더를 기준으로 한다. backend는 B01에서 FastAPI 앱 골격과 uv 기반 의존성 관리를 시작했고, frontend는 Vite 앱과 Stellarium 실험 폴더를 가진다. 내부 파일은 해당 기능에 착수할 때 만들며, 기능 없는 빈 계층은 미리 늘리지 않는다.
 
 웹은 frontend에서 npm, API는 backend에서 uv로 의존성과 실행·빌드를 따로 관리하되 루트의 Git 저장소 하나에서 버전 관리한다. README·.gitignore 같은 공통 파일은 루트에 둘 수 있으며 향후 CI를 위한 .github 같은 도구 폴더도 필요할 때 추가한다. Git은 빈 폴더를 추적하지 않으므로 현재 로컬의 빈 폴더는 그대로 커밋되지 않는다. 최초 환경 구성 파일을 넣는 시점에 함께 추적한다.
 

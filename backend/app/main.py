@@ -1,0 +1,37 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+from app.core.config import AppSettings, get_settings
+
+
+class HealthResponse(BaseModel):
+    status: str
+    appName: str
+    environment: str
+
+
+def create_app(settings: AppSettings | None = None) -> FastAPI:
+    resolved_settings = settings or get_settings()
+    app = FastAPI(title=resolved_settings.app_name)
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=resolved_settings.allowed_origins,
+        allow_credentials=False,
+        allow_methods=["GET"],
+        allow_headers=["*"],
+    )
+
+    @app.get("/health", response_model=HealthResponse)
+    def read_health() -> HealthResponse:
+        return HealthResponse(
+            status="ok",
+            appName=resolved_settings.app_name,
+            environment=resolved_settings.environment,
+        )
+
+    return app
+
+
+app = create_app()
