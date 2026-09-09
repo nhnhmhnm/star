@@ -4,19 +4,20 @@
 
 ## 1. 제안 기술 구성
 
-| 영역 | 제안 | 책임 |
-|---|---|---|
-| 앱 | React + TypeScript + Vite | 화면·선택 위치·오류 상태 |
-| 백엔드 | Python + FastAPI, 필요할 때 도입 | 기상/검색 중계·비밀 키·공통 캐시·호출 제한 |
-| API 계약 | Pydantic + OpenAPI | 언어와 독립적인 HTTP·JSON 요청/응답 |
-| API 개발 도구 | uv·Ruff·pytest | Python 의존성 고정·린트·테스트 |
-| 하늘 | Stellarium Web Engine | 현재 UTC·위치·시선 기반 천문 렌더링 |
-| 지도·검색 우선 후보 | Google Maps JavaScript API + Places의 새 검색 기능 | 일반 지도 조작·장소 검색·결과 이동 |
-| 지도 대안 | Leaflet + 호환 타일·검색 제공자 | 동일 UX, 검색 범위·이용 조건 별도 검증 |
-| 태양 고도 | SunCalc 1.9.0 기준 검증 | 기하 고도 rad → deg, -18° 밤 판정 |
-| 기상 검토 후보 | Open-Meteo | 운량·날씨 상태·기상 기준 시각 |
-| 상태 | React Context + reducer | 탐색 후보와 확정 관측 위치 분리 |
-| 배포 | 정적 앱 + 필요 시 소규모 프록시 | 비밀 키·공용 제한·캐시 필요에 따라 결정 |
+| 영역                | 제안                                               | 책임                                                           |
+| ------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
+| 앱                  | React + TypeScript + Vite                          | 화면·선택 위치·오류 상태                                       |
+| 백엔드              | Python + FastAPI                                   | 공개 앱 설정·방문 세션·실시간 presence, 기상/검색 중계·비밀 키 |
+| API 계약            | Pydantic + OpenAPI                                 | 언어와 독립적인 HTTP·JSON 요청/응답                            |
+| API 개발 도구       | uv·Ruff·pytest                                     | Python 의존성 고정·린트·테스트                                 |
+| 하늘                | Stellarium Web Engine                              | 현재 UTC·위치·시선 기반 천문 렌더링                            |
+| 지도·검색 우선 후보 | Google Maps JavaScript API + Places의 새 검색 기능 | 일반 지도 조작·장소 검색·결과 이동                             |
+| 지도 대안           | Leaflet + 호환 타일·검색 제공자                    | 동일 UX, 검색 범위·이용 조건 별도 검증                         |
+| 태양 고도           | SunCalc 1.9.0 기준 검증                            | 기하 고도 rad → deg, 환경 설정 경계 판정                       |
+| 기상 검토 후보      | Open-Meteo                                         | 운량·날씨 상태·기상 기준 시각                                  |
+| 상태                | React Context + reducer                            | 방문 세션·탐색 후보·확정 관측 위치 분리                        |
+| 실시간 연결         | WebSocket + 메모리 TTL 저장소                      | 활성 관측자 스냅샷·변경·만료, 단일 서버부터 검증               |
+| 배포                | 정적 앱 + FastAPI                                  | 공개 설정·presence·비밀 키·공용 제한 제공                      |
 
 Google Maps와 같은 조작 경험은 확정 요구사항이다. 실제 공급자·계정·비용은 아직 확정하지 않는다. Google 지도와 Places 조합은 공식적으로 검색 결과의 지도 이동·확대와 클릭 좌표 수신을 제공한다. [검색 위젯](https://developers.google.com/maps/documentation/javascript/place-autocomplete-new), [클릭 좌표 예제](https://developers.google.com/maps/documentation/javascript/examples/event-click-latlng)
 
@@ -24,19 +25,23 @@ Google Maps와 같은 조작 경험은 확정 요구사항이다. 실제 공급�
 
 ```mermaid
 flowchart TD
+    I[닉네임 방문 세션] --> M[세계지도]
     S[장소 검색] --> V[지도 이동·확대]
     G[드래그·스와이프·줌] --> V
     V --> C[사용자 최종 클릭]
     C --> O[확정 관측 좌표]
     O --> N[현재 UTC·태양 고도 판정]
-    N -->|고도 -18도 이하| E[Stellarium 현재 하늘]
+    P[환경 변수의 밤 기준] --> N
+    N -->|설정 기준 이하| E[Stellarium 현재 하늘]
     N -->|기준 미달·오류| B[진입 차단·종료 안내]
+    E --> L[관측 중 presence 등록]
+    L --> M
     O --> W[기상 조회: 채택 시]
     W --> R[기상 안내·구름 표현]
     E --> R
 ```
 
-검색 결과 좌표는 지도 탐색용이다. 실제 관측자 위치는 클릭 처리에서만 갱신한다. `map-explorer`, `night-eligibility`, `sky-viewer`, `live-clock`을 분리하고 기상 채택 시 `weather`를 추가한다. 타입 계약은 [데이터 명세](./data-and-interface.md)를 따른다.
+검색 결과 좌표는 지도 탐색용이다. 관측 위치는 클릭 처리에서만 갱신하며, 공개 presence에는 이를 0.25° 기본 격자 중심으로 바꾼 값만 전달한다. `visitor-session`, `presence`, `map-explorer`, `night-eligibility`, `sky-viewer`, `live-clock`을 분리하고 기상 채택 시 `weather`를 추가한다. 타입 계약은 [데이터 명세](./data-and-interface.md)를 따른다.
 
 ## 3. 지도와 위치 확정
 
@@ -51,23 +56,25 @@ flowchart TD
 - 검색 응답은 요청 순서로 관리한다. 오래된 결과가 뒤늦게 현재 지도나 선택을 바꾸지 않게 한다.
 - 지도 배경 로드 실패 시 새 선택은 차단하고 재시도한다. 검색 실패 시에는 지도 조작을 유지한다.
 
-## 4. 단일 밤 정책
+## 4. 단일 밤 정책과 환경 설정
 
-사용자가 확정한 정책: `태양 중심 기하 고도 <= -18°`일 때만 관측 가능.
+사용자가 확정한 기본 정책은 `태양 중심 기하 고도 <= -18°`일 때만 관측 가능이다. 구현은 숫자를 하드코딩하지 않고 백엔드 환경 변수 `NIGHT_ALTITUDE_THRESHOLD_DEG`의 값을 사용한다. 기본값은 `-18`이며 `-90 <= 값 <= 0`만 허용한다. 잘못된 값은 안전한 기본값으로 조용히 대체하지 않고 서버 시작을 실패시킨다.
 
-| 기하 고도 h | 표시 단계 | 관측 |
-|---|---|---|
-| h >= 0° | 낮 | 불가 |
-| -6° <= h < 0° | 시민박명 | 불가 |
-| -12° <= h < -6° | 항해박명 | 불가 |
-| -18° < h < -12° | 천문박명 | 불가 |
-| h <= -18° | 천문학적 밤 | 가능 |
+| 기하 고도 h     | 표시 단계   | 관측               |
+| --------------- | ----------- | ------------------ |
+| h >= 0°         | 낮          | 불가               |
+| -6° <= h < 0°   | 시민박명    | 불가               |
+| -12° <= h < -6° | 항해박명    | 불가               |
+| -18° < h < -12° | 천문박명    | 불가               |
+| h <= -18°       | 천문학적 밤 | 기본 설정에서 가능 |
 
-등호는 제품 규약이다. 밤 기준은 일몰이나 날씨 제공자의 is_day와 다르다. 실제 일출·일몰은 태양 크기·굴절도 포함한다. [USNO 정의](https://aa.usno.navy.mil/faq/RST_defs)
+등호는 제품 규약이다. 위 표의 박명 경계는 과학적 분류이며 환경 변수를 변경해도 바뀌지 않는다. 배포 설정을 변경하면 `관측 가능` 경계만 달라진다. 밤 기준은 일몰이나 날씨 제공자의 is_day와 다르다. 실제 일출·일몰은 태양 크기·굴절도 포함한다. [USNO 정의](https://aa.usno.navy.mil/faq/RST_defs)
+
+FastAPI의 공개 설정 응답 `nightAltitudeThresholdDeg`를 프론트엔드의 단일 입력으로 사용한다. 앱 시작·탭 복귀·주기 갱신에서 설정을 읽고, 실패하면 지도 탐색은 유지하되 관측 진입은 차단한다. 프론트엔드 빌드 환경에 같은 정책값을 복제하지 않는다. 환경 변수 변경은 서버 재시작 후 적용하며 열린 탭은 새 설정을 받은 다음 지도·선택 위치·활성 하늘을 재판정한다.
 
 SunCalc 1.9.0 고도는 rad이므로 180/π를 곱한다. v2 계열은 단위·굴절 규약이 다르므로 버전을 교체할 때 기하 고도 기준과의 일치를 재검증한다. 단위 변환만 바꿔 같은 결과라고 가정하지 않는다. [1.9.0](https://github.com/mourner/suncalc/tree/v1.9.0), [현재 문서](https://github.com/mourner/suncalc)
 
-지도에는 -18° 조건에 맞는 관측 가능 영역을 표시하도록 설계한다. 일반 일몰 terminator를 관측 가능 경계로 재사용하지 않는다. 태양 위치와 등고선 기반 오버레이 또는 검증된 지리 계산이 필요하다. Leaflet.Terminator는 대안 후보일 뿐 -18° 기능 지원을 전제하지 않는다. 극지·날짜변경선·지도 반복을 검증하고 최종 진입은 항상 클릭 좌표의 직접 계산으로 결정한다.
+지도에는 설정된 고도 조건에 맞는 관측 가능 영역을 표시하도록 설계한다. 일반 일몰 terminator를 관측 가능 경계로 재사용하지 않는다. 태양 위치와 등고선 기반 오버레이 또는 검증된 지리 계산이 필요하다. Leaflet.Terminator는 대안 후보일 뿐 임의 고도 경계 지원을 전제하지 않는다. 극지·날짜변경선·지도 반복을 검증하고 최종 진입은 항상 클릭 좌표의 직접 계산으로 결정한다.
 
 지도는 최대 60초마다, 클릭·진입·엔진 준비 완료·탭 복귀에는 즉시 재계산한다. 하늘은 매초 판정하며 기준 미달이나 계산 오류 시 하늘을 가리고 중단한다. 로딩 중 기준을 넘은 경우도 첫 프레임 전에 차단한다.
 
@@ -83,13 +90,13 @@ SunCalc 1.9.0 고도는 rad이므로 180/π를 곱한다. v2 계열은 단위·�
 
 ## 6. 엔진·데이터 연결
 
-| 앱 값 | 엔진 연결 후보 | 변환 |
-|---|---|---|
-| 위도·경도 deg | core.observer.latitude / longitude | deg × π / 180 |
-| 고도 m | core.observer.elevation | MVP 0m; 실제 지형 높이 아님 |
-| 현재 UTC epoch ms | core.observer.utc | ms / 86400000 + 40587, UTC MJD |
-| FOV deg | core.fov | deg → rad |
-| 앱 단일 시계 | core.time_speed | 0, 앱이 현재 UTC 전달 |
+| 앱 값             | 엔진 연결 후보                     | 변환                           |
+| ----------------- | ---------------------------------- | ------------------------------ |
+| 위도·경도 deg     | core.observer.latitude / longitude | deg × π / 180                  |
+| 고도 m            | core.observer.elevation            | MVP 0m; 실제 지형 높이 아님    |
+| 현재 UTC epoch ms | core.observer.utc                  | ms / 86400000 + 40587, UTC MJD |
+| FOV deg           | core.fov                           | deg → rad                      |
+| 앱 단일 시계      | core.time_speed                    | 0, 앱이 현재 UTC 전달          |
 
 이 매핑은 소스 확인을 바탕으로 하며 실제 JS 바인딩·갱신 순서는 향후 고정 커밋으로 검증한다. [관측자](https://github.com/Stellarium/stellarium-web-engine/blob/master/src/observer.c), [코어](https://github.com/Stellarium/stellarium-web-engine/blob/master/src/core.c), [시간 진행](https://github.com/Stellarium/stellarium-web-engine/blob/master/src/navigation.c)
 
@@ -115,32 +122,32 @@ Google Maps/Places 선택 시 결제 계정·API 키·호출 과금과 제한 �
 
 ## 9. 지도 밝기장의 최종 규약
 
-현재 UTC와 태양 위치로 각 지리 좌표의 기하 고도를 계산한다. 낮·박명의 연속 밝기 효과는 h > -18° 범위에만 적용하고, h <= -18°이면 **하나의 nightTint와 nightOpacity로 고정**한다. 태양 고도가 더 낮아져도 밤 상태 레이어는 변하지 않는다.
+현재 UTC와 태양 위치로 각 지리 좌표의 기하 고도를 계산한다. 낮·박명의 연속 밝기 효과는 `h > nightAltitudeThresholdDeg` 범위에 적용하고, 기준 이하이면 **하나의 nightTint와 nightOpacity로 고정**한다. 태양 고도가 더 낮아져도 밤 상태 레이어는 변하지 않는다.
 
 빛 중심은 태양 직하점에 대응하는 지리 위치를 기준으로 하며 현재 태양 위치·계절·투영에 따라 모양이 달라질 수 있다. 한국 정오 부근에는 한국을 포함한 낮 영역이 넓게 밝게 보이는 효과를 목표로 한다. 화면 좌표에 고정한 원형 그라데이션을 지도와 무관하게 붙이지 않는다.
 
 관측 가능 영역에는 운량·달빛·광공해에 따른 추가 지도 음영을 적용하지 않는다. 바탕지도와 상태색 레이어를 분리하고, 지명·도로 가독성을 위해 밤 음영 상한을 둔다. 단일 색은 상태 레이어의 규약이며 실제 타일의 지형색까지 동일하게 만든다는 뜻은 아니다.
 
-지도 음영, -18° 경계, 카드 계산에는 같은 태양 모델과 UTC 스냅샷을 사용한다. 지도 렌더링은 보간해도 클릭 판정은 원본 좌표에서 직접 계산한다. 해상도·LOD·날짜변경선 처리와 화면 갱신 비용은 향후 검증한다.
+지도 음영, 설정된 경계, 카드 계산에는 같은 공개 설정·태양 모델·UTC 스냅샷을 사용한다. 지도 렌더링은 보간해도 클릭 판정은 원본 좌표에서 직접 계산한다. 해상도·LOD·날짜변경선 처리와 화면 갱신 비용은 향후 검증한다.
 
 ## 10. 하늘 배경의 밝기
 
 대기 효과를 기본 켜고 유지한다. 확인한 공식 소스에서는 태양·달 위치와 밝기, 대기·광공해 설정이 렌더링에 쓰인다. 실제 기상 조회·현지 광공해 자동 반영과 구분한다. [공식 대기 소스](https://github.com/Stellarium/stellarium-web-engine/blob/master/src/modules/atmosphere.c)
 
-제품 진입은 -18° 이하로 제한하므로 밝은 박명 화면은 제공하지 않는다. 그렇더라도 모든 밤을 동일 RGB로 보정하지 않고 엔진의 자연스러운 밝기 차이를 유지한다. 기본 검정 CSS 배경은 로딩 배경일 수 있으나 최종 하늘 색을 규정하지 않는다.
+기본 설정의 제품 진입은 -18° 이하로 제한하므로 밝은 박명 화면은 제공하지 않는다. 그렇더라도 모든 밤을 동일 RGB로 보정하지 않고 엔진의 자연스러운 밝기 차이를 유지한다. 기본 검정 CSS 배경은 로딩 배경일 수 있으나 최종 하늘 색을 규정하지 않는다.
 
 ## 11. 언어와 개발 순서 확정
 
-2026-09-08 사용자 선택으로 백엔드는 Python + FastAPI를 사용한다. 프론트엔드는 TypeScript + React + Vite를 유지한다. Node.js는 웹 개발 도구용이며 API 서버의 언어 선택과 구분한다. 서버 도입 시점은 외부 API 운영 요구에 따라 정하고 초기 DB는 추가하지 않는다.
+2026-09-08 사용자 선택으로 백엔드는 Python + FastAPI를 사용한다. 프론트엔드는 TypeScript + React + Vite를 유지한다. Node.js는 웹 개발 도구용이며 API 서버의 언어 선택과 구분한다. 2026-09-09 실시간 관측자 상태와 공개 설정이 추가되어 서버를 앱 기반 단계에서 도입한다. 초기 계정 DB는 추가하지 않는다.
 
 웹과 API의 공통 타입을 TypeScript 패키지로 강제하지 않는다. FastAPI 모델에서 내보낸 OpenAPI 명세와 계약 검증으로 연결한다. 웹/API 의존성은 npm과 uv로 따로 관리한다. [개발 가이드](./development-guide.md)
 
-엔진 최소 검증 후 정식 화면은 메인 지도에서 밤하늘 페이지 순서로 만든다. 각 기능의 구현·검증을 하나의 목적을 가진 커밋으로 남긴다. [커밋별 구현 계획](./implementation-plan.md)
+엔진 최소 검증 후 백엔드·공개 설정과 닉네임 세션을 만들고, 정식 화면은 메인 지도에서 밤하늘 페이지 순서로 만든다. 관측 위치 선택 뒤 presence와 지도 핀을 연결한다. 각 기능의 구현·검증을 하나의 목적을 가진 커밋으로 남긴다. [커밋별 구현 계획](./implementation-plan.md)
 
 ## 12. 객체지향과 의존성 방향
 
 지도는 MapController, 검색은 PlaceSearchProvider, 하늘은 SkyEngine 계약을 두고 선택한 SDK의 구현을 어댑터 안에 격리한다. UI/Hook은 계약을 사용하고 조립 지점만 실제 구현을 선택한다. React 화면은 함수 컴포넌트이며 밤 판정·좌표·시간 변환은 순수 함수다.
 
-백엔드는 FastAPI Router → WeatherService → WeatherProvider 계약으로 의존하고 OpenMeteoProvider는 이를 구현한다. Depends는 프레임워크 경계의 조립에 사용하고 서비스는 HTTP나 FastAPI 타입에 직접 의존하지 않는다. Python Protocol은 제공자 타입 계약, Pydantic은 입력·응답 검증에 사용한다.
+백엔드는 기능별 Router → Service → 저장소/Provider 계약으로 의존한다. PresenceService는 세션 시계와 PresenceStore를, WeatherService는 WeatherProvider를 사용한다. Depends는 프레임워크 경계의 조립에 사용하고 서비스는 HTTP나 FastAPI 타입에 직접 의존하지 않는다. Python Protocol은 외부 의존성 계약, Pydantic은 입력·응답 검증에 사용한다.
 
-공유 서비스에 사용자 위치를 저장하지 않고 요청 인자로 전달한다. 엔진·지도·HTTP 연결의 생성/해제 책임을 명시한다. DB 계층·범용 BaseService·깊은 상속은 현재 범위에 추가하지 않는다. [객체지향 설계와 변경 예시](./object-oriented-design.md)
+일반 조회 서비스에는 사용자 위치를 저장하지 않는다. PresenceStore만 활성 관측자의 근사 격자 위치를 TTL 동안 소유하고 정확한 클릭 좌표와 관측 이력은 저장하지 않는다. 엔진·지도·HTTP·WebSocket 연결의 생성/해제 책임을 명시한다. 범용 BaseService·깊은 상속은 현재 범위에 추가하지 않는다. [객체지향 설계와 변경 예시](./object-oriented-design.md), [닉네임·관측자 핀](./presence-and-chat.md)
