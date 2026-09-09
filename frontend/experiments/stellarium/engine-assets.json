@@ -39,5 +39,5 @@
       "requiredForFirstExperiment": false
     }
   ],
-  "fonts": ["/stellarium-fonts/Roboto-Regular.ttf", "/stellarium-fonts/Roboto-Bold.ttf"]
+  "fonts": ["/stellarium-fonts/NotoSans-Regular.ttf", "/stellarium-fonts/NotoSans-Bold.ttf"]
 }

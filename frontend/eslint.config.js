@@ -3,9 +3,27 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import tseslint from 'typescript-eslint'
 
+const browserGlobals = {
+  Blob: 'readonly',
+  console: 'readonly',
+  document: 'readonly',
+  fetch: 'readonly',
+  URL: 'readonly',
+  window: 'readonly',
+  clearInterval: 'readonly',
+  setInterval: 'readonly',
+}
+
 export default tseslint.config(
   {
-    ignores: ['dist', 'coverage', 'node_modules'],
+    ignores: [
+      'dist',
+      'dist-stellarium',
+      'coverage',
+      'node_modules',
+      'experiments/stellarium/public',
+      'experiments/stellarium/vendor',
+    ],
   },
   js.configs.recommended,
   tseslint.configs.recommended,
@@ -19,7 +37,16 @@ export default tseslint.config(
     },
   },
   {
+    files: ['experiments/**/*.js'],
+    languageOptions: {
+      globals: browserGlobals,
+    },
+  },
+  {
     files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: browserGlobals,
+    },
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,

@@ -10,8 +10,10 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:stellarium": "vite --host 127.0.0.1 --port 5174 experiments/stellarium",
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
+    "build:stellarium": "vite build experiments/stellarium --outDir ../../dist-stellarium --emptyOutDir",
     "lint": "eslint .",
     "format": "prettier . --write",
     "format:check": "prettier . --check",

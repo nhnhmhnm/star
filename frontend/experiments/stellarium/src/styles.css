@@ -1,0 +1,228 @@
+:root {
+  color: #eaf1ff;
+  background: #050816;
+  font-family:
+    Inter,
+    Pretendard,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.experiment-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(83, 115, 255, 0.22), transparent 28rem),
+    linear-gradient(135deg, #050816 0%, #090d1d 46%, #14101f 100%);
+}
+
+.sky-panel {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.sky-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  display: block;
+}
+
+.sky-help {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  max-width: 360px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(3, 7, 18, 0.72);
+  color: rgba(234, 241, 255, 0.82);
+  backdrop-filter: blur(14px);
+}
+
+.sky-help strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #ffffff;
+}
+
+.control-panel {
+  min-height: 100vh;
+  padding: 32px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(8, 12, 28, 0.84);
+  box-shadow: -20px 0 80px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(24px);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #8fb3ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 12px;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  line-height: 1.08;
+}
+
+h2 {
+  margin-bottom: 14px;
+  font-size: 1rem;
+}
+
+.description {
+  color: rgba(234, 241, 255, 0.76);
+  line-height: 1.6;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 24px 0;
+}
+
+.status-grid div,
+.form-section,
+.button-group,
+.checklist {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.status-grid div {
+  padding: 14px;
+}
+
+dt {
+  margin-bottom: 6px;
+  color: rgba(234, 241, 255, 0.58);
+  font-size: 0.76rem;
+}
+
+dd {
+  margin: 0;
+  word-break: break-word;
+}
+
+.form-section,
+.checklist {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 18px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  color: rgba(234, 241, 255, 0.78);
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(3, 7, 18, 0.62);
+  color: #ffffff;
+}
+
+.checkbox-row {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #77a2ff, #b68cff);
+  color: #030712;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 14px;
+}
+
+.button-group button {
+  background: rgba(255, 255, 255, 0.1);
+  color: #eaf1ff;
+}
+
+.checklist ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+  color: rgba(234, 241, 255, 0.72);
+}
+
+.checklist li[data-done='true'] {
+  color: #98f5c6;
+}
+
+@media (max-width: 920px) {
+  .experiment-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sky-panel {
+    min-height: 62vh;
+  }
+
+  .sky-canvas {
+    min-height: 62vh;
+  }
+
+  .control-panel {
+    min-height: auto;
+    border-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}

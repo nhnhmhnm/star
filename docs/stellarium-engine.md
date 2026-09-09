@@ -6,7 +6,7 @@
 
 Stellarium Web Engine은 웹사이트에 임베드할 수 있는 WebGL 기반 JavaScript 천문 렌더러다. 공식 README는 대기 시뮬레이션, Gaia 별 데이터 접근, 별자리, 하늘 레이어와 landscape 기능을 제공한다고 설명한다. JavaScript 버전은 Emscripten과 SCons를 준비한 뒤 `make js`로 `stellarium-web-engine.js`와 `stellarium-web-engine.wasm`을 만든다.
 
-공식 simple-html 예제는 브라우저에서 `stellarium-web-engine.js`를 로드하고, `StelWebEngine`에 `wasmFile`과 `canvas`를 넘긴다. 준비가 끝난 뒤 별, sky culture, DSO, landscape, Milky Way, 태양·달 데이터 소스를 추가하고 Roboto 폰트를 등록한다.
+공식 simple-html 예제는 브라우저에서 `stellarium-web-engine.js`를 로드하고, `StelWebEngine`에 `wasmFile`과 `canvas`를 넘긴다. 준비가 끝난 뒤 별, sky culture, DSO, landscape, Milky Way, 태양·달 데이터 소스를 추가하고 폰트를 등록한다. C05에서 고정 커밋을 빌드한 결과, 해당 커밋의 로컬 폰트 자산은 Roboto가 아니라 NotoSans였다.
 
 - 공식 저장소: https://github.com/Stellarium/stellarium-web-engine
 - 공식 README: https://raw.githubusercontent.com/Stellarium/stellarium-web-engine/master/README.md
@@ -39,8 +39,8 @@ C05 실험은 `frontend/experiments/stellarium` 아래에서만 실행한다. �
 /stellarium-skydata/surveys/milkyway
 /stellarium-skydata/surveys/sso/moon
 /stellarium-skydata/surveys/sso/sun
-/stellarium-fonts/Roboto-Regular.ttf
-/stellarium-fonts/Roboto-Bold.ttf
+/stellarium-fonts/NotoSans-Regular.ttf
+/stellarium-fonts/NotoSans-Bold.ttf
 ```
 
 태양·달·대기와 별자리 선·이름을 확인해야 하므로 stars, skycultures/western, sun, moon, font 파일은 C05의 필수 자산이다. DSO, Milky Way, landscape는 첫 실험에서 누락되어도 핵심 진입 검증 실패로 보지 않지만, 누락 여부를 C06에 기록한다.
@@ -55,3 +55,11 @@ C05 실험은 `frontend/experiments/stellarium` 아래에서만 실행한다. �
 6. C05에서 캔버스 첫 프레임, 현재 UTC, 좌표 설정, FOV 변경, 대기 표시, 별자리 선과 이름 토글을 확인한다.
 
 빌드 산출물과 skydata는 크기와 라이선스 검토가 끝나기 전까지 Git에 넣지 않는다. C21에서 실제 사용하는 엔진·데이터·폰트의 고지와 소스 제공 방식을 확정한다.
+
+## C05 실험 결과
+
+Docker 기반 Emscripten/SCons 환경에서 `make js-es6` 빌드를 완료했고, 실험용 public 경로로 JS/WASM, 테스트 skydata, NotoSans 폰트를 복사했다. Vite dev 서버는 `stellarium-web-engine.wasm`을 `application/wasm`으로 제공했다.
+
+실험 페이지에서는 현재 UTC를 `date2MJD`로 변환해 `stel.observer.utc`에 1초마다 반영한다. 위도와 경도는 `stel.D2R`로 라디안 변환 후 `stel.observer.latitude`, `stel.observer.longitude`에 넣는다. FOV는 `stel.zoomTo`, 대기는 `stel.core.atmosphere.visible`, 별자리 선과 이름은 `stel.core.constellations.lines_visible`, `stel.core.constellations.labels_visible`로 제어되는 것을 확인했다.
+
+headless Chrome 스크린샷에서 엔진 상태가 `Rendering`으로 전환되고, 현재 UTC와 서울 좌표, 대기 효과, 별자리 선과 이름이 표시됐다. 이 실험 화면은 제품의 밤 진입 정책을 적용하지 않으므로 낮 위치에서는 하늘이 밝게 보일 수 있다. 실제 제품에서는 C07 이후 태양 고도 -18° 이하 조건으로 낮 위치의 하늘 진입을 막는다.

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>C05 Stellarium Web Engine Experiment</title>
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <main class="experiment-shell">
+      <section class="sky-panel" aria-label="Stellarium Web Engine render area">
+        <canvas id="stel-canvas" class="sky-canvas" aria-label="Current sky"></canvas>
+        <div class="sky-help">
+          <strong>Input check</strong>
+          Drag to move the view, use wheel or pinch to zoom, and click to select an object.
+        </div>
+      </section>
+
+      <aside class="control-panel" aria-label="Engine experiment controls">
+        <p class="eyebrow">C05 Spike</p>
+        <h1>Stellarium engine integration check</h1>
+        <p class="description">
+          This isolated page checks the pinned JS/WASM engine before it enters the product route:
+          current UTC, observer coordinates, FOV, atmosphere, constellation lines, and constellation
+          labels.
+        </p>
+
+        <dl class="status-grid">
+          <div>
+            <dt>Status</dt>
+            <dd id="engine-status">Loading engine</dd>
+          </div>
+          <div>
+            <dt>Current UTC</dt>
+            <dd id="utc-status">-</dd>
+          </div>
+          <div>
+            <dt>Coordinates</dt>
+            <dd id="coordinate-status">-</dd>
+          </div>
+          <div>
+            <dt>FPS</dt>
+            <dd id="fps-status">-</dd>
+          </div>
+        </dl>
+
+        <form id="location-form" class="form-section">
+          <h2>Observer location</h2>
+          <label>
+            Latitude
+            <input id="latitude-input" type="number" min="-90" max="90" step="0.0001" required />
+          </label>
+          <label>
+            Longitude
+            <input id="longitude-input" type="number" min="-180" max="180" step="0.0001" required />
+          </label>
+          <button type="submit">Apply coordinates</button>
+        </form>
+
+        <section class="button-group" aria-label="Observer location presets">
+          <button type="button" data-location="seoul">Seoul</button>
+          <button type="button" data-location="mauna-kea">Mauna Kea</button>
+          <button type="button" data-location="sydney">Sydney</button>
+        </section>
+
+        <section class="form-section">
+          <h2>Sky display</h2>
+          <label>
+            FOV
+            <select id="fov-select">
+              <option value="20">20 deg narrow</option>
+              <option value="50" selected>50 deg default</option>
+              <option value="90">90 deg wide</option>
+            </select>
+          </label>
+          <label class="checkbox-row">
+            <input id="atmosphere-toggle" type="checkbox" checked />
+            Show atmosphere
+          </label>
+          <label class="checkbox-row">
+            <input id="constellation-lines-toggle" type="checkbox" checked />
+            Show constellation lines
+          </label>
+          <label class="checkbox-row">
+            <input id="constellation-labels-toggle" type="checkbox" checked />
+            Show constellation labels
+          </label>
+        </section>
+
+        <section class="checklist">
+          <h2>Checks</h2>
+          <ul>
+            <li id="check-engine">JS/WASM engine loaded</li>
+            <li id="check-data">Star, Sun, Moon, and western sky culture data attached</li>
+            <li id="check-time">Current UTC reflected in real time</li>
+            <li id="check-controls">
+              Coordinate, FOV, atmosphere, and constellation controls work
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+  </body>
+</html>
