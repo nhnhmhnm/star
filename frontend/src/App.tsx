@@ -1,9 +1,26 @@
 import { useEffect, useState } from 'react'
 
-import styles from './App.module.css'
+import { AppShell } from './app/AppShell'
+import { ObservationProvider } from './app/observation/ObservationProvider'
+import { useObservationState } from './app/observation/useObservation'
+import { navigateTo } from './app/routing/navigation'
+import { useRoute } from './app/routing/useRoute'
+import { SkyViewerPage } from './pages/SkyViewerPage'
+import { WorldMapPage } from './pages/WorldMapPage'
 import { fetchPublicAppConfig, type PublicAppConfig } from './shared/api/publicConfig'
 
 function App() {
+  return (
+    <ObservationProvider>
+      <RoutedApp />
+    </ObservationProvider>
+  )
+}
+
+function RoutedApp() {
+  const route = useRoute()
+  const observation = useObservationState()
+  const selectedLocation = observation.selectedLocation
   const [config, setConfig] = useState<PublicAppConfig | null>(null)
   const [configError, setConfigError] = useState<string | null>(null)
 
@@ -29,22 +46,22 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (route.path === '/sky' && !selectedLocation) {
+      navigateTo('/')
+    }
+  }, [route.path, selectedLocation])
+
+  const shouldShowSky = route.path === '/sky' && selectedLocation !== null
+
   return (
-    <main className={styles.app} aria-labelledby="app-title">
-      <section className={styles.panel}>
-        <p className={styles.eyebrow}>개발 환경 준비</p>
-        <h1 id="app-title">Real Time Sky</h1>
-        <p className={styles.description}>
-          문서의 구현 순서에 맞춰 React, TypeScript, Vite 기반을 준비했습니다.
-        </p>
-        <p className={styles.configStatus} aria-live="polite">
-          {config
-            ? `밤하늘 진입 기준: 태양 고도 ${config.nightAltitudeThresholdDeg}° 이하`
-            : '공개 설정을 확인하는 중입니다.'}
-        </p>
-        {configError ? <p className={styles.error}>{configError}</p> : null}
-      </section>
-    </main>
+    <AppShell activePath={shouldShowSky ? '/sky' : '/'} canOpenSky={selectedLocation !== null}>
+      {shouldShowSky ? (
+        <SkyViewerPage selectedLocation={selectedLocation} />
+      ) : (
+        <WorldMapPage config={config} configError={configError} />
+      )}
+    </AppShell>
   )
 }
 
