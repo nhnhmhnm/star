@@ -27,6 +27,8 @@ FastAPI는 Python 타입 힌트를 활용한 API 작성, 데이터 검증과 Ope
 
 FastAPI-fastkit은 FastAPI 초보자를 위한 프로젝트 생성·기능 선택 도구로 참고할 수 있다. 현재 백엔드는 공개 설정·presence·기상 중계처럼 필요한 기능이 작고 명확하므로 스타터 전체를 가져오지 않고, 필요한 구조나 명령 아이디어만 비교 자료로 삼는다. [FastAPI-fastkit](https://github.com/bnbong/FastAPI-fastkit)
 
+밤하늘 진입 기준은 `NIGHT_ALTITUDE_THRESHOLD_DEG` 환경 변수로 관리한다. 백엔드는 시작 시 -90도 이상 0도 이하만 허용하고 `/config/public`으로 공개한다. 프론트엔드는 이 값을 단일 설정 로더에서 읽어 밤 판정 계산과 이후 지도·하늘 진입 정책에 사용한다.
+
 Node.js는 Vite와 웹 도구를 실행하는 용도로 사용한다. Python 서버를 선택해도 웹 개발 도구에는 필요하며 백엔드 런타임으로 사용하는 것은 아니다. Node.js LTS·Python·프레임워크의 지원 조합을 개발 착수 시 확인하고 버전을 고정한다. [Vite 문서](https://vite.dev/guide/), [Node.js 릴리스](https://nodejs.org/en/about/previous-releases)
 
 Java + Spring Boot도 기술적으로 가능한 선택이다. Spring Boot는 독립 실행 가능한 Java 애플리케이션을 제공하며, 기존 Java 경험이나 Spring 기반 운영 환경이 있다면 선택할 이유가 있다. 이번에는 현재의 API 중계 중심 범위와 사용자 선택에 따라 Python + FastAPI로 확정했다. 두 서버를 동시에 구축하지 않는다. [Spring Boot 공식 문서](https://docs.spring.io/spring-boot/index.html)

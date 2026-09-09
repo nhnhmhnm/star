@@ -13,6 +13,7 @@ class AppSettings(BaseSettings):
     allowed_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"],
     )
+    night_altitude_threshold_deg: float = Field(default=-18.0, ge=-90.0, le=0.0)
 
     model_config = SettingsConfigDict(
         env_file=".env",

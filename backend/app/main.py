@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.configuration.router import router as configuration_router
 from app.core.config import AppSettings, get_settings
 
 
@@ -30,6 +31,8 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
             appName=resolved_settings.app_name,
             environment=resolved_settings.environment,
         )
+
+    app.include_router(configuration_router)
 
     return app
 

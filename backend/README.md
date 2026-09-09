@@ -26,6 +26,12 @@ uv run uvicorn app.main:app --reload
 ```
 
 The API health check is available at `GET /health`.
+The public runtime config is available at `GET /config/public`.
+
+## Environment
+
+`NIGHT_ALTITUDE_THRESHOLD_DEG` controls the solar altitude threshold for sky entry.
+The default is `-18`, which means astronomically dark night.
 
 ## Quality Checks
 

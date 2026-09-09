@@ -1,0 +1,88 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Star API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Read Health",
+        "operationId": "read_health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/public": {
+      "get": {
+        "tags": [
+          "config"
+        ],
+        "summary": "Read Public Config",
+        "operationId": "read_public_config_config_public_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "appName": {
+            "type": "string",
+            "title": "Appname"
+          },
+          "environment": {
+            "type": "string",
+            "title": "Environment"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "appName",
+          "environment"
+        ],
+        "title": "HealthResponse"
+      },
+      "PublicConfigResponse": {
+        "properties": {
+          "nightAltitudeThresholdDeg": {
+            "type": "number",
+            "title": "Nightaltitudethresholddeg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nightAltitudeThresholdDeg"
+        ],
+        "title": "PublicConfigResponse"
+      }
+    }
+  }
+}

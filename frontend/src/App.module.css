@@ -29,3 +29,14 @@
   margin: 16px 0 0;
   color: var(--color-muted);
 }
+
+.configStatus {
+  margin: 24px 0 0;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.error {
+  margin: 8px 0 0;
+  color: #ffb4a8;
+}

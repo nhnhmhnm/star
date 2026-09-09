@@ -5,7 +5,11 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
-  // React 컴포넌트 테스트가 브라우저 DOM API를 사용할 수 있도록 jsdom에서 실행한다.
+  server: {
+    proxy: {
+      '/config': 'http://127.0.0.1:8000',
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
