@@ -14,6 +14,7 @@ class AppSettings(BaseSettings):
         default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"],
     )
     night_altitude_threshold_deg: float = Field(default=-18.0, ge=-90.0, le=0.0)
+    visitor_session_ttl_seconds: int = Field(default=43_200, ge=60, le=86_400)
 
     model_config = SettingsConfigDict(
         env_file=".env",

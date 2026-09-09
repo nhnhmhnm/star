@@ -18,7 +18,7 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
           밤인 지역을 선택해 하늘을 엽니다
         </h1>
         <p className={styles.description}>
-          닉네임을 정한 뒤 세계지도에서 원하는 위치를 클릭하면 해당 좌표의 밤하늘로 입장합니다.
+          세계지도에서 원하는 위치를 클릭하면 해당 좌표의 밤하늘로 입장합니다.
         </p>
         <p className={styles.status} aria-live="polite">
           {config

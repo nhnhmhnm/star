@@ -7,14 +7,18 @@ import type { AppPath } from './routing/routes'
 interface AppShellProps {
   activePath: AppPath
   canOpenSky: boolean
+  displayName: string
   children: ReactNode
 }
 
-export function AppShell({ activePath, canOpenSky, children }: AppShellProps) {
+export function AppShell({ activePath, canOpenSky, displayName, children }: AppShellProps) {
   return (
     <div className={styles.shell}>
       <header className={styles.header}>
-        <p className={styles.brand}>Real Time Sky</p>
+        <div>
+          <p className={styles.brand}>Real Time Sky</p>
+          <p className={styles.sessionName}>{displayName}</p>
+        </div>
         <nav className={styles.nav} aria-label="주요 화면">
           <a
             className={styles.navLink}

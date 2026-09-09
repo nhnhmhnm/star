@@ -5,6 +5,8 @@ import { ObservationProvider } from './app/observation/ObservationProvider'
 import { useObservationState } from './app/observation/useObservation'
 import { navigateTo } from './app/routing/navigation'
 import { useRoute } from './app/routing/useRoute'
+import { useVisitorSession } from './features/visitor-session/useVisitorSession'
+import { NicknameEntryPage } from './pages/NicknameEntryPage'
 import { SkyViewerPage } from './pages/SkyViewerPage'
 import { WorldMapPage } from './pages/WorldMapPage'
 import { fetchPublicAppConfig, type PublicAppConfig } from './shared/api/publicConfig'
@@ -21,6 +23,7 @@ function RoutedApp() {
   const route = useRoute()
   const observation = useObservationState()
   const selectedLocation = observation.selectedLocation
+  const visitorSession = useVisitorSession()
   const [config, setConfig] = useState<PublicAppConfig | null>(null)
   const [configError, setConfigError] = useState<string | null>(null)
 
@@ -54,8 +57,22 @@ function RoutedApp() {
 
   const shouldShowSky = route.path === '/sky' && selectedLocation !== null
 
+  if (!visitorSession.session) {
+    return (
+      <NicknameEntryPage
+        error={visitorSession.error}
+        isSubmitting={visitorSession.isSubmitting}
+        onSubmit={visitorSession.submitNickname}
+      />
+    )
+  }
+
   return (
-    <AppShell activePath={shouldShowSky ? '/sky' : '/'} canOpenSky={selectedLocation !== null}>
+    <AppShell
+      activePath={shouldShowSky ? '/sky' : '/'}
+      canOpenSky={selectedLocation !== null}
+      displayName={visitorSession.session.displayName}
+    >
       {shouldShowSky ? (
         <SkyViewerPage selectedLocation={selectedLocation} />
       ) : (

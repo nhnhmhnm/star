@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.configuration.router import router as configuration_router
 from app.core.config import AppSettings, get_settings
+from app.sessions.router import router as sessions_router
 
 
 class HealthResponse(BaseModel):
@@ -20,7 +21,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=resolved_settings.allowed_origins,
         allow_credentials=False,
-        allow_methods=["GET"],
+        allow_methods=["GET", "POST"],
         allow_headers=["*"],
     )
 
@@ -33,6 +34,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
         )
 
     app.include_router(configuration_router)
+    app.include_router(sessions_router)
 
     return app
 
