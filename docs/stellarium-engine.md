@@ -1,6 +1,6 @@
 # Stellarium Web Engine 공급 기준
 
-기준일: 2026-09-08. C04의 결정 사항이며 C05의 엔진 실험은 이 문서를 기준으로 진행한다.
+기준일: 2026-09-09. C04의 공급 결정과 C05의 엔진 실험 기준이다. 상세 실행 결과와 남은 제약은 [C06 검증 기록](./stellarium-validation.md)에 정리한다.
 
 ## 공식 근거
 
@@ -63,3 +63,5 @@ Docker 기반 Emscripten/SCons 환경에서 `make js-es6` 빌드를 완료했고
 실험 페이지에서는 현재 UTC를 `date2MJD`로 변환해 `stel.observer.utc`에 1초마다 반영한다. 위도와 경도는 `stel.D2R`로 라디안 변환 후 `stel.observer.latitude`, `stel.observer.longitude`에 넣는다. FOV는 `stel.zoomTo`, 대기는 `stel.core.atmosphere.visible`, 별자리 선과 이름은 `stel.core.constellations.lines_visible`, `stel.core.constellations.labels_visible`로 제어되는 것을 확인했다.
 
 headless Chrome 스크린샷에서 엔진 상태가 `Rendering`으로 전환되고, 현재 UTC와 서울 좌표, 대기 효과, 별자리 선과 이름이 표시됐다. 이 실험 화면은 제품의 밤 진입 정책을 적용하지 않으므로 낮 위치에서는 하늘이 밝게 보일 수 있다. 실제 제품에서는 C07 이후 환경 설정에서 받은 밤 고도 기준으로 낮 위치의 하늘 진입을 막으며 기본값은 -18°다.
+
+C05의 핵심 연결은 통과했지만 모바일 입력·실기기 성능·반복 초기화 수명주기·운영 자산 공급은 아직 검증하지 않았다. 빌드 호환 패치와 Vite의 public module 제한도 제품 빌드에서 해결해야 한다. 통과·부분 통과·미검증 항목은 [검증 결과와 제약](./stellarium-validation.md)을 기준으로 판단한다.

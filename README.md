@@ -35,6 +35,7 @@
 11. [객체지향 설계와 변경 경계](./docs/object-oriented-design.md)
 12. [Stellarium Web Engine 공급 기준](./docs/stellarium-engine.md)
 13. [닉네임·실시간 관측자 핀](./docs/presence-and-chat.md)
+14. [Stellarium Web Engine 검증 결과](./docs/stellarium-validation.md)
 
 이전 검토의 낮 진입 허용·시간 조절·직접 좌표 입력안은 현재 제품 방향에서 제외했다.
 
