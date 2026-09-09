@@ -36,6 +36,7 @@
 12. [Stellarium Web Engine 공급 기준](./docs/stellarium-engine.md)
 13. [닉네임·실시간 관측자 핀](./docs/presence-and-chat.md)
 14. [Stellarium Web Engine 검증 결과](./docs/stellarium-validation.md)
+15. [지도·검색 제공자 선택 근거](./docs/map-provider-decision.md)
 
 이전 검토의 낮 진입 허용·시간 조절·직접 좌표 입력안은 현재 제품 방향에서 제외했다.
 
@@ -48,6 +49,8 @@
 ## 앞으로의 개발 기준
 
 프론트엔드는 **TypeScript + React + Vite**, 백엔드는 사용자가 선택한 **Python + FastAPI**를 사용한다. 실시간 관측자 상태와 공개 설정을 위해 API를 초기 단계부터 도입하고, 첫 버전은 계정 DB 없이 메모리 TTL 상태를 사용한다.
+
+지도는 돈을 쓰지 않는 개인 로컬호스트 프로젝트 기준으로 개발한다. 우선 후보는 **MapLibre GL JS + 무료 개발용 지도 스타일/타일**이며, 토큰이 없어도 정적 세계지도 fallback으로 핵심 흐름을 검증할 수 있게 한다. Google Maps, Mapbox 무료 구간, 네이버, 카카오는 품질 보강 후보로만 남기고 결제 활성화나 초과 과금 가능성이 있으면 기본 구현에 넣지 않는다.
 
 저장소는 **docs / backend / frontend**로 나눈다. docs는 기획·설계, backend는 Python API, frontend는 웹 화면과 Stellarium 연결을 맡는다. Git은 루트 하나에서 관리하고 각 앱의 의존성·실행·배포는 분리한다. [내부 폴더 배치와 계약 관리](./docs/development-guide.md#3-저장소-구조)
 

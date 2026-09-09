@@ -4,22 +4,23 @@
 
 ## 1. 제안 기술 구성
 
-| 영역                | 제안                                               | 책임                                                           |
-| ------------------- | -------------------------------------------------- | -------------------------------------------------------------- |
-| 앱                  | React + TypeScript + Vite                          | 화면·선택 위치·오류 상태                                       |
-| 백엔드              | Python + FastAPI                                   | 공개 앱 설정·방문 세션·실시간 presence, 기상/검색 중계·비밀 키 |
-| API 계약            | Pydantic + OpenAPI                                 | 언어와 독립적인 HTTP·JSON 요청/응답                            |
-| API 개발 도구       | uv·Ruff·pytest                                     | Python 의존성 고정·린트·테스트                                 |
-| 하늘                | Stellarium Web Engine                              | 현재 UTC·위치·시선 기반 천문 렌더링                            |
-| 지도·검색 우선 후보 | Google Maps JavaScript API + Places의 새 검색 기능 | 일반 지도 조작·장소 검색·결과 이동                             |
-| 지도 대안           | Leaflet + 호환 타일·검색 제공자                    | 동일 UX, 검색 범위·이용 조건 별도 검증                         |
-| 태양 고도           | SunCalc 1.9.0 기준 검증                            | 기하 고도 rad → deg, 환경 설정 경계 판정                       |
-| 기상 검토 후보      | Open-Meteo                                         | 운량·날씨 상태·기상 기준 시각                                  |
-| 상태                | React Context + reducer                            | 방문 세션·탐색 후보·확정 관측 위치 분리                        |
-| 실시간 연결         | WebSocket + 메모리 TTL 저장소                      | 활성 관측자 스냅샷·변경·만료, 단일 서버부터 검증               |
-| 배포                | 정적 앱 + FastAPI                                  | 공개 설정·presence·비밀 키·공용 제한 제공                      |
+| 영역                | 제안                                          | 책임                                                           |
+| ------------------- | --------------------------------------------- | -------------------------------------------------------------- |
+| 앱                  | React + TypeScript + Vite                     | 화면·선택 위치·오류 상태                                       |
+| 백엔드              | Python + FastAPI                              | 공개 앱 설정·방문 세션·실시간 presence, 기상/검색 중계·비밀 키 |
+| API 계약            | Pydantic + OpenAPI                            | 언어와 독립적인 HTTP·JSON 요청/응답                            |
+| API 개발 도구       | uv·Ruff·pytest                                | Python 의존성 고정·린트·테스트                                 |
+| 하늘                | Stellarium Web Engine                         | 현재 UTC·위치·시선 기반 천문 렌더링                            |
+| 지도·검색 우선 후보 | MapLibre GL JS + 무료 개발용 지도 스타일/타일 | 일반 지도 조작·장소 검색·결과 이동, 커스텀 레이어              |
+| 지도 fallback       | 정적 세계지도 자산                            | 토큰 없이 로컬에서 좌표 선택 흐름 검증                         |
+| 지도 대안           | Mapbox 무료 구간·Google·네이버·카카오         | 품질 보강 후보, 결제·초과 과금 가능성이 있으면 기본값에서 제외 |
+| 태양 고도           | SunCalc 1.9.0 기준 검증                       | 기하 고도 rad → deg, 환경 설정 경계 판정                       |
+| 기상 검토 후보      | Open-Meteo                                    | 운량·날씨 상태·기상 기준 시각                                  |
+| 상태                | React Context + reducer                       | 방문 세션·탐색 후보·확정 관측 위치 분리                        |
+| 실시간 연결         | WebSocket + 메모리 TTL 저장소                 | 활성 관측자 스냅샷·변경·만료, 단일 서버부터 검증               |
+| 배포                | 정적 앱 + FastAPI                             | 공개 설정·presence·비밀 키·공용 제한 제공                      |
 
-Google Maps와 같은 조작 경험은 확정 요구사항이다. 실제 공급자·계정·비용은 아직 확정하지 않는다. Google 지도와 Places 조합은 공식적으로 검색 결과의 지도 이동·확대와 클릭 좌표 수신을 제공한다. [검색 위젯](https://developers.google.com/maps/documentation/javascript/place-autocomplete-new), [클릭 좌표 예제](https://developers.google.com/maps/documentation/javascript/examples/event-click-latlng)
+Google Maps와 같은 조작 경험은 확정 요구사항이다. C09에서 사용자는 돈을 쓰지 않는 개인 로컬호스트 프로젝트로 범위를 정했고, MVP 우선 후보를 MapLibre GL JS + 무료 개발용 지도 스타일/타일로 정했다. 구현은 `MapProvider`와 `PlaceSearchProvider` 계약 뒤에 두어 외부 공급자 없이도 정적 세계지도 fallback으로 핵심 흐름을 검증할 수 있게 한다. [지도·검색 제공자 선택 근거](./map-provider-decision.md)
 
 ## 2. 구조와 상태 경계
 
@@ -116,7 +117,7 @@ SunCalc 1.9.0 고도는 rad이므로 180/π를 곱한다. v2 계열은 단위·�
 
 초기화 중 이탈과 재진입, React Strict Mode, listener·canvas·루프 중복을 관리한다. 완전 해제가 어려우면 앱 수명 동안 한 엔진을 유지하되 불허·숨김 상태에서 표시와 렌더링을 멈추는 방식을 검토한다.
 
-Google Maps/Places 선택 시 결제 계정·API 키·호출 과금과 제한 설정이 필요하다. 브라우저용 지도 키는 출처·API 제한을 설정하고 서버용 비밀 키와 구분한다. [Google 사용·과금 안내](https://developers.google.com/maps/documentation/javascript/usage-and-billing)
+기본 지도 경로는 돈이 나가지 않아야 한다. MapLibre GL JS 자체는 무료지만 타일·검색 공급자는 별도 조건이 있으므로 무료·비상업·호출 제한을 확인한 것만 붙인다. 외부 토큰이 없으면 정적 세계지도 fallback을 사용한다. Mapbox 무료 구간, Google Maps/Places, 네이버, 카카오는 품질 보강 대안으로 유지하지만 결제 활성화나 초과 과금 가능성이 있으면 기본 구현에 넣지 않는다. [지도·검색 제공자 선택 근거](./map-provider-decision.md)
 
 기상·검색 제공자의 비밀 키와 전체 요청 제한이 필요하면 프록시를 추가한다. 현재는 제공자 계약이나 배포를 진행하지 않는다.
 
