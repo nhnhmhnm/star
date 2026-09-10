@@ -1,8 +1,11 @@
 import { useState } from 'react'
 
-import { useObservationDispatch } from '../app/observation/useObservation'
+import { useObservationDispatch, useObservationState } from '../app/observation/useObservation'
+import { SelectedLocationCard } from '../features/location-selection/SelectedLocationCard'
+import type { GeoCoordinate } from '../features/map-explorer/mapProjection'
 import type { MapFocusRequest } from '../features/map-explorer/useStaticWorldMap'
 import { StaticWorldMap } from '../features/map-explorer/StaticWorldMap'
+import { getNightEligibility } from '../features/night-eligibility/nightEligibility'
 import { localPlaceSearchProvider } from '../features/place-search/localPlaceSearchProvider'
 import { PlaceSearchBox } from '../features/place-search/PlaceSearchBox'
 import type { PlaceSearchResult } from '../features/place-search/placeSearch'
@@ -16,7 +19,20 @@ interface WorldMapPageProps {
 
 export function WorldMapPage({ config, configError }: WorldMapPageProps) {
   const observationDispatch = useObservationDispatch()
+  const observation = useObservationState()
   const [mapFocusRequest, setMapFocusRequest] = useState<MapFocusRequest | null>(null)
+  const selectedLocation = observation.selectedLocation
+  const selectedEligibility =
+    selectedLocation && config
+      ? getNightEligibility(
+          {
+            latitudeDeg: selectedLocation.latitudeDeg,
+            longitudeDeg: selectedLocation.longitudeDeg,
+          },
+          new Date(),
+          config.nightAltitudeThresholdDeg,
+        )
+      : null
 
   function moveMapToSearchResult(result: PlaceSearchResult) {
     observationDispatch({ type: 'clearLocation' })
@@ -27,12 +43,26 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
     })
   }
 
+  function selectObservationCoordinate(coordinate: GeoCoordinate) {
+    observationDispatch({
+      type: 'selectLocation',
+      location: {
+        id: `manual-${coordinate.latitudeDeg.toFixed(4)}-${coordinate.longitudeDeg.toFixed(4)}`,
+        label: `위도 ${coordinate.latitudeDeg.toFixed(2)}°, 경도 ${coordinate.longitudeDeg.toFixed(2)}°`,
+        latitudeDeg: coordinate.latitudeDeg,
+        longitudeDeg: coordinate.longitudeDeg,
+      },
+    })
+  }
+
   return (
     <section className={styles.page} aria-labelledby="map-title">
       <div className={styles.mapStage}>
         <StaticWorldMap
           key={mapFocusRequest?.id ?? 'static-world-map'}
           focusRequest={mapFocusRequest}
+          selectedCoordinate={selectedLocation}
+          onCoordinateSelect={selectObservationCoordinate}
         />
       </div>
       <aside className={styles.sidePanel}>
@@ -55,6 +85,12 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
         <PlaceSearchBox
           provider={localPlaceSearchProvider}
           onResultSelect={moveMapToSearchResult}
+        />
+        <SelectedLocationCard
+          location={selectedLocation}
+          eligibility={selectedEligibility}
+          configError={configError}
+          onClear={() => observationDispatch({ type: 'clearLocation' })}
         />
         {configError ? <p className={styles.error}>{configError}</p> : null}
       </aside>

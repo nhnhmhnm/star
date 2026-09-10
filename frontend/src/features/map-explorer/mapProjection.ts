@@ -8,6 +8,25 @@ export interface GeoCoordinate {
   longitudeDeg: number
 }
 
+export interface ViewportPoint {
+  clientX: number
+  clientY: number
+}
+
+export interface ViewportRect {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export interface MapViewBox {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
 export const worldMapWidth = 360
 export const worldMapHeight = 180
 export const minMapZoom = 1
@@ -40,6 +59,17 @@ export function mapPointToGeoCoordinate(point: MapPoint): GeoCoordinate {
   return {
     latitudeDeg: clampLatitude(90 - point.y),
     longitudeDeg: normalizeLongitude(point.x - 180),
+  }
+}
+
+export function mapPointFromViewportPoint(
+  point: ViewportPoint,
+  rect: ViewportRect,
+  viewBox: MapViewBox,
+): MapPoint {
+  return {
+    x: viewBox.x + ((point.clientX - rect.left) / rect.width) * viewBox.width,
+    y: viewBox.y + ((point.clientY - rect.top) / rect.height) * viewBox.height,
   }
 }
 

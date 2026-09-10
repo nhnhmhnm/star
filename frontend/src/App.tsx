@@ -5,6 +5,7 @@ import { ObservationProvider } from './app/observation/ObservationProvider'
 import { useObservationState } from './app/observation/useObservation'
 import { navigateTo } from './app/routing/navigation'
 import { useRoute } from './app/routing/useRoute'
+import { getNightEligibility } from './features/night-eligibility/nightEligibility'
 import { useVisitorSession } from './features/visitor-session/useVisitorSession'
 import { NicknameEntryPage } from './pages/NicknameEntryPage'
 import { SkyViewerPage } from './pages/SkyViewerPage'
@@ -26,6 +27,17 @@ function RoutedApp() {
   const visitorSession = useVisitorSession()
   const [config, setConfig] = useState<PublicAppConfig | null>(null)
   const [configError, setConfigError] = useState<string | null>(null)
+  const selectedLocationCanOpenSky =
+    selectedLocation !== null && config !== null
+      ? getNightEligibility(
+          {
+            latitudeDeg: selectedLocation.latitudeDeg,
+            longitudeDeg: selectedLocation.longitudeDeg,
+          },
+          new Date(),
+          config.nightAltitudeThresholdDeg,
+        ).isEligible
+      : false
 
   useEffect(() => {
     let isMounted = true
@@ -50,12 +62,13 @@ function RoutedApp() {
   }, [])
 
   useEffect(() => {
-    if (route.path === '/sky' && !selectedLocation) {
+    if (route.path === '/sky' && !selectedLocationCanOpenSky) {
       navigateTo('/')
     }
-  }, [route.path, selectedLocation])
+  }, [route.path, selectedLocationCanOpenSky])
 
-  const shouldShowSky = route.path === '/sky' && selectedLocation !== null
+  const shouldShowSky =
+    route.path === '/sky' && selectedLocation !== null && selectedLocationCanOpenSky
 
   if (!visitorSession.session) {
     return (
@@ -70,7 +83,7 @@ function RoutedApp() {
   return (
     <AppShell
       activePath={shouldShowSky ? '/sky' : '/'}
-      canOpenSky={selectedLocation !== null}
+      canOpenSky={selectedLocationCanOpenSky}
       displayName={visitorSession.session.displayName}
     >
       {shouldShowSky ? (

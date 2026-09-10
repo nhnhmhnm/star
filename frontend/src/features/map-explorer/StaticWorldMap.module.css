@@ -42,6 +42,20 @@
   pointer-events: none;
 }
 
+.selectedMarker {
+  fill: #f5c86a;
+  stroke: rgb(5 10 18 / 86%);
+  stroke-width: 1.1;
+  pointer-events: none;
+}
+
+.selectedMarker circle:last-child {
+  fill: transparent;
+  stroke: #f5c86a;
+  stroke-width: 1;
+  opacity: 0.58;
+}
+
 .controls {
   position: absolute;
   top: 16px;

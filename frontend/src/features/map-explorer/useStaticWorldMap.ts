@@ -4,6 +4,7 @@ import {
   clampMapCenter,
   clampZoom,
   geoCoordinateToMapPoint,
+  mapPointFromViewportPoint,
   mapPointToGeoCoordinate,
   maxMapZoom,
   minMapZoom,
@@ -17,6 +18,7 @@ interface DragState {
   startClientX: number
   startClientY: number
   startCenter: GeoCoordinate
+  moved: boolean
 }
 
 const initialCenter: GeoCoordinate = {
@@ -30,10 +32,18 @@ export interface MapFocusRequest {
   zoom: number
 }
 
+interface StaticWorldMapOptions {
+  onCoordinateSelect?: (coordinate: GeoCoordinate) => void
+}
+
+const clickMoveTolerancePx = 6
+
 export function useStaticWorldMap(
   initialMapCenter: GeoCoordinate = initialCenter,
   initialMapZoom: number = minMapZoom,
+  options: StaticWorldMapOptions = {},
 ) {
+  const onCoordinateSelect = options.onCoordinateSelect
   const initialZoom = clampZoom(initialMapZoom)
   const [center, setCenter] = useState(() => clampMapCenter(initialMapCenter, initialZoom))
   const [zoom, setZoom] = useState(initialZoom)
@@ -68,12 +78,13 @@ export function useStaticWorldMap(
 
   const startDrag = useCallback(
     (event: PointerEvent<SVGSVGElement>) => {
-      event.currentTarget.setPointerCapture(event.pointerId)
+      event.currentTarget.setPointerCapture?.(event.pointerId)
       dragState.current = {
         pointerId: event.pointerId,
         startClientX: event.clientX,
         startClientY: event.clientY,
         startCenter: center,
+        moved: false,
       }
     },
     [center],
@@ -91,8 +102,14 @@ export function useStaticWorldMap(
       const startPoint = geoCoordinateToMapPoint(currentDrag.startCenter)
       const viewBoxWidth = worldMapWidth / zoom
       const viewBoxHeight = worldMapHeight / zoom
-      const deltaX = ((event.clientX - currentDrag.startClientX) / bounds.width) * viewBoxWidth
-      const deltaY = ((event.clientY - currentDrag.startClientY) / bounds.height) * viewBoxHeight
+      const clientDeltaX = event.clientX - currentDrag.startClientX
+      const clientDeltaY = event.clientY - currentDrag.startClientY
+      const deltaX = (clientDeltaX / bounds.width) * viewBoxWidth
+      const deltaY = (clientDeltaY / bounds.height) * viewBoxHeight
+
+      if (Math.hypot(clientDeltaX, clientDeltaY) > clickMoveTolerancePx) {
+        currentDrag.moved = true
+      }
 
       setCenter(
         clampMapCenter(
@@ -107,7 +124,32 @@ export function useStaticWorldMap(
     [zoom],
   )
 
-  const endDrag = useCallback((event: PointerEvent<SVGSVGElement>) => {
+  const endDrag = useCallback(
+    (event: PointerEvent<SVGSVGElement>) => {
+      const currentDrag = dragState.current
+
+      if (currentDrag?.pointerId === event.pointerId) {
+        if (!currentDrag.moved && onCoordinateSelect) {
+          const point = mapPointFromViewportPoint(
+            {
+              clientX: event.clientX,
+              clientY: event.clientY,
+            },
+            event.currentTarget.getBoundingClientRect(),
+            viewBox,
+          )
+
+          onCoordinateSelect(mapPointToGeoCoordinate(point))
+        }
+
+        event.currentTarget.releasePointerCapture?.(event.pointerId)
+        dragState.current = null
+      }
+    },
+    [onCoordinateSelect, viewBox],
+  )
+
+  const cancelDrag = useCallback((event: PointerEvent<SVGSVGElement>) => {
     if (dragState.current?.pointerId === event.pointerId) {
       dragState.current = null
     }
@@ -133,6 +175,7 @@ export function useStaticWorldMap(
     startDrag,
     drag,
     endDrag,
+    cancelDrag,
     zoomWithWheel,
   }
 }

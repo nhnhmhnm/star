@@ -1,3 +1,4 @@
+import { geoCoordinateToMapPoint, type GeoCoordinate } from './mapProjection'
 import styles from './StaticWorldMap.module.css'
 import { useStaticWorldMap, type MapFocusRequest } from './useStaticWorldMap'
 
@@ -5,10 +6,17 @@ const graticuleValues = [-120, -60, 0, 60, 120]
 
 interface StaticWorldMapProps {
   focusRequest?: MapFocusRequest | null
+  onCoordinateSelect?: (coordinate: GeoCoordinate) => void
+  selectedCoordinate?: GeoCoordinate | null
 }
 
-export function StaticWorldMap({ focusRequest = null }: StaticWorldMapProps) {
-  const map = useStaticWorldMap(focusRequest?.center, focusRequest?.zoom)
+export function StaticWorldMap({
+  focusRequest = null,
+  onCoordinateSelect,
+  selectedCoordinate = null,
+}: StaticWorldMapProps) {
+  const map = useStaticWorldMap(focusRequest?.center, focusRequest?.zoom, { onCoordinateSelect })
+  const selectedPoint = selectedCoordinate ? geoCoordinateToMapPoint(selectedCoordinate) : null
 
   return (
     <div className={styles.mapShell}>
@@ -20,7 +28,7 @@ export function StaticWorldMap({ focusRequest = null }: StaticWorldMapProps) {
         onPointerDown={map.startDrag}
         onPointerMove={map.drag}
         onPointerUp={map.endDrag}
-        onPointerCancel={map.endDrag}
+        onPointerCancel={map.cancelDrag}
         onWheel={map.zoomWithWheel}
       >
         <rect className={styles.ocean} x="0" y="0" width="360" height="180" />
@@ -67,6 +75,12 @@ export function StaticWorldMap({ focusRequest = null }: StaticWorldMapProps) {
             Australia
           </text>
         </g>
+        {selectedPoint ? (
+          <g className={styles.selectedMarker} aria-hidden="true">
+            <circle cx={selectedPoint.x} cy={selectedPoint.y} r="3.5" />
+            <circle cx={selectedPoint.x} cy={selectedPoint.y} r="7" />
+          </g>
+        ) : null}
       </svg>
       <div className={styles.controls} aria-label="지도 조작">
         <button type="button" onClick={map.zoomIn} disabled={!map.canZoomIn}>

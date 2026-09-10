@@ -5,6 +5,7 @@ import {
   clampZoom,
   geoCoordinateToMapPoint,
   mapPointToGeoCoordinate,
+  mapPointFromViewportPoint,
   maxMapZoom,
   minMapZoom,
   normalizeLongitude,
@@ -39,5 +40,15 @@ describe('mapProjection', () => {
       latitudeDeg: 67.5,
       longitudeDeg: 135,
     })
+  })
+
+  it('converts viewport clicks into map points inside the current viewBox', () => {
+    expect(
+      mapPointFromViewportPoint(
+        { clientX: 180, clientY: 90 },
+        { left: 0, top: 0, width: 360, height: 180 },
+        { x: 90, y: 45, width: 180, height: 90 },
+      ),
+    ).toEqual({ x: 180, y: 90 })
   })
 })
