@@ -61,6 +61,7 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
         <StaticWorldMap
           key={mapFocusRequest?.id ?? 'static-world-map'}
           focusRequest={mapFocusRequest}
+          nightAltitudeThresholdDeg={config?.nightAltitudeThresholdDeg ?? null}
           selectedCoordinate={selectedLocation}
           onCoordinateSelect={selectObservationCoordinate}
         />
@@ -79,8 +80,8 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
             : '공개 설정을 확인하는 중입니다.'}
         </p>
         <p className={styles.note}>
-          현재 지도는 돈을 쓰지 않는 로컬 fallback입니다. 확대·축소와 드래그를 먼저 검증하고, 클릭
-          좌표 확정은 다음 위치 선택 단계에서 연결합니다.
+          지도 밝기는 입장 시각의 태양 고도를 계산한 안내 레이어입니다. 관측 가능 여부는 클릭한
+          좌표에서 현재 시각으로 다시 판정합니다.
         </p>
         <PlaceSearchBox
           provider={localPlaceSearchProvider}

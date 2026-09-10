@@ -1,0 +1,23 @@
+.overlay {
+  pointer-events: none;
+}
+
+.day {
+  fill: rgb(255 221 142 / 22%);
+}
+
+.civil-twilight {
+  fill: rgb(135 151 196 / 22%);
+}
+
+.nautical-twilight {
+  fill: rgb(49 74 122 / 26%);
+}
+
+.astronomical-twilight {
+  fill: rgb(21 36 78 / 30%);
+}
+
+.night {
+  fill: rgb(4 12 34 / 42%);
+}

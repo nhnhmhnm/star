@@ -1,4 +1,5 @@
 import { geoCoordinateToMapPoint, type GeoCoordinate } from './mapProjection'
+import { MapLightingOverlay } from '../map-lighting/MapLightingOverlay'
 import styles from './StaticWorldMap.module.css'
 import { useStaticWorldMap, type MapFocusRequest } from './useStaticWorldMap'
 
@@ -6,12 +7,14 @@ const graticuleValues = [-120, -60, 0, 60, 120]
 
 interface StaticWorldMapProps {
   focusRequest?: MapFocusRequest | null
+  nightAltitudeThresholdDeg?: number | null
   onCoordinateSelect?: (coordinate: GeoCoordinate) => void
   selectedCoordinate?: GeoCoordinate | null
 }
 
 export function StaticWorldMap({
   focusRequest = null,
+  nightAltitudeThresholdDeg = null,
   onCoordinateSelect,
   selectedCoordinate = null,
 }: StaticWorldMapProps) {
@@ -55,6 +58,7 @@ export function StaticWorldMap({
           <polygon points="274,124 318,132 330,152 294,158" />
           <polygon points="122,150 220,148 275,160 240,172 142,170" />
         </g>
+        <MapLightingOverlay nightAltitudeThresholdDeg={nightAltitudeThresholdDeg} />
         <g className={styles.labels} aria-hidden="true">
           <text x="70" y="56">
             North America
