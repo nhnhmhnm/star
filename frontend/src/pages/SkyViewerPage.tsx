@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import type { SelectedObservationLocation } from '../app/observation/observationState'
 import { useObservationPresence } from '../features/presence/useObservationPresence'
 import { useCurrentSkyEngine } from '../features/sky-engine/useCurrentSkyEngine'
+import { skyFovBounds } from '../features/sky-engine/StellariumAdapter'
 import type { VisitorSession } from '../features/visitor-session/visitorSession'
 import type { PublicAppConfig } from '../shared/api/publicConfig'
 import styles from './SkyViewerPage.module.css'
@@ -49,6 +50,40 @@ export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyV
         <p className={styles.presence} aria-live="polite">
           관측 상태: {formatPresenceStatus(presenceStatus)}
         </p>
+        {sky.status === 'ready' ? (
+          <div className={styles.controls} aria-label="하늘 방향과 확대 조작">
+            <button
+              type="button"
+              className={styles.controlButton}
+              onClick={sky.zoomOut}
+              disabled={sky.view.fovDeg >= skyFovBounds.maximumDeg}
+              aria-label="축소"
+              title="축소"
+            >
+              −
+            </button>
+            <button
+              type="button"
+              className={styles.controlButton}
+              onClick={sky.resetView}
+              aria-label="초기 시선으로 복구"
+              title="초기 시선으로 복구"
+            >
+              ↺
+            </button>
+            <button
+              type="button"
+              className={styles.controlButton}
+              onClick={sky.zoomIn}
+              disabled={sky.view.fovDeg <= skyFovBounds.minimumDeg}
+              aria-label="확대"
+              title="확대"
+            >
+              +
+            </button>
+            <span className={styles.fovValue}>FOV {Math.round(sky.view.fovDeg)}°</span>
+          </div>
+        ) : null}
       </div>
       {sky.status !== 'ready' ? (
         <div className={styles.overlay} role="status" aria-live="polite">

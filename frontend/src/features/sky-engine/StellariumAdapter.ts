@@ -2,9 +2,17 @@ import type { SelectedObservationLocation } from '../../app/observation/observat
 import { defaultStellariumAssets, type StellariumAssetManifest } from './stellariumAssets'
 
 export interface SkyEngine {
+  enforceViewBounds(): void
+  getView(): SkyViewState
+  resetView(): void
+  setFovDeg(fovDeg: number): void
   syncCurrentTime(observedAt?: Date): void
   startRealtimeSync(): void
   dispose(): void
+}
+
+export interface SkyViewState {
+  fovDeg: number
 }
 
 export interface CreateStellariumSkyEngineOptions {
@@ -21,6 +29,7 @@ interface StellariumDataSource {
 interface StellariumCore {
   atmosphere: { visible: boolean }
   constellations: { labels_visible: boolean; lines_visible: boolean }
+  fov: number
   planets: StellariumDataSource
   skycultures: StellariumDataSource
   stars: StellariumDataSource
@@ -36,7 +45,9 @@ interface StellariumInstance {
     elevation: number
     latitude: number
     longitude: number
+    pitch: number
     utc: number
+    yaw: number
   }
   date2MJD(dateMs: number): number
   setFont(font: 'regular' | 'bold', url: string): Promise<void>
@@ -48,6 +59,13 @@ interface StellariumModule {
 }
 
 const initialFovDeg = 70
+const initialAltitudeDeg = 45
+const initialAzimuthDeg = 0
+export const skyFovBounds = {
+  minimumDeg: 20,
+  maximumDeg: 120,
+  initialDeg: initialFovDeg,
+}
 
 export async function createStellariumSkyEngine({
   canvas,
@@ -120,6 +138,31 @@ class StellariumAdapter implements SkyEngine {
     this.engine.observer.utc = this.engine.date2MJD(observedAt.getTime())
   }
 
+  getView(): SkyViewState {
+    return {
+      fovDeg: this.engine.core.fov / this.engine.D2R,
+    }
+  }
+
+  setFovDeg(fovDeg: number): void {
+    const clampedFovDeg = clamp(fovDeg, skyFovBounds.minimumDeg, skyFovBounds.maximumDeg)
+    this.engine.zoomTo(clampedFovDeg * this.engine.D2R, 0)
+  }
+
+  resetView(): void {
+    this.engine.observer.yaw = initialAzimuthDeg * this.engine.D2R
+    this.engine.observer.pitch = initialAltitudeDeg * this.engine.D2R
+    this.setFovDeg(initialFovDeg)
+  }
+
+  enforceViewBounds(): void {
+    const currentFovDeg = this.engine.core.fov / this.engine.D2R
+
+    if (currentFovDeg < skyFovBounds.minimumDeg || currentFovDeg > skyFovBounds.maximumDeg) {
+      this.setFovDeg(currentFovDeg)
+    }
+  }
+
   startRealtimeSync(): void {
     this.stopRealtimeSync()
     this.syncCurrentTime()
@@ -138,7 +181,7 @@ class StellariumAdapter implements SkyEngine {
 
   private applyDefaultView(): void {
     this.engine.core.time_speed = 0
-    this.engine.zoomTo(initialFovDeg * this.engine.D2R, 0)
+    this.resetView()
     this.engine.core.atmosphere.visible = true
     this.engine.core.constellations.lines_visible = true
     this.engine.core.constellations.labels_visible = true
@@ -150,4 +193,8 @@ class StellariumAdapter implements SkyEngine {
       this.realtimeSyncId = null
     }
   }
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(Math.max(value, minimum), maximum)
 }

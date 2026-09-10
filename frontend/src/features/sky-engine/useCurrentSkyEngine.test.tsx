@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useRef } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -40,8 +40,33 @@ function TestViewer({
       <canvas ref={canvasRef} />
       <p>{sky.status}</p>
       <p>{sky.message}</p>
+      <p>FOV {sky.view.fovDeg}</p>
+      <button type="button" onClick={sky.zoomIn}>
+        zoom in
+      </button>
+      <button type="button" onClick={sky.resetView}>
+        reset
+      </button>
     </>
   )
+}
+
+function createFakeEngine(initialFovDeg = 70): SkyEngine {
+  let fovDeg = initialFovDeg
+
+  return {
+    dispose: vi.fn(),
+    enforceViewBounds: vi.fn(),
+    getView: vi.fn(() => ({ fovDeg })),
+    resetView: vi.fn(() => {
+      fovDeg = 70
+    }),
+    setFovDeg: vi.fn((nextFovDeg: number) => {
+      fovDeg = nextFovDeg
+    }),
+    startRealtimeSync: vi.fn(),
+    syncCurrentTime: vi.fn(),
+  }
 }
 
 describe('useCurrentSkyEngine', () => {
@@ -56,11 +81,7 @@ describe('useCurrentSkyEngine', () => {
   })
 
   it('starts the Stellarium engine when the selected location is currently night', async () => {
-    const engine: SkyEngine = {
-      dispose: vi.fn(),
-      startRealtimeSync: vi.fn(),
-      syncCurrentTime: vi.fn(),
-    }
+    const engine = createFakeEngine()
     const createEngine = vi.fn<() => Promise<SkyEngine>>().mockResolvedValue(engine)
 
     render(<TestViewer createEngine={createEngine} location={nightLocation} />)
@@ -72,6 +93,21 @@ describe('useCurrentSkyEngine', () => {
     expect(await screen.findByText('ready')).toBeInTheDocument()
     expect(createEngine).toHaveBeenCalledOnce()
     expect(engine.startRealtimeSync).toHaveBeenCalledOnce()
+  })
+
+  it('exposes zoom and reset actions for the ready sky engine', async () => {
+    const engine = createFakeEngine()
+    const createEngine = vi.fn<() => Promise<SkyEngine>>().mockResolvedValue(engine)
+
+    render(<TestViewer createEngine={createEngine} location={nightLocation} />)
+
+    expect(await screen.findByText('ready')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'zoom in' }))
+    expect(engine.setFovDeg).toHaveBeenCalledWith(60)
+
+    fireEvent.click(screen.getByRole('button', { name: 'reset' }))
+    expect(engine.resetView).toHaveBeenCalledOnce()
   })
 
   it('blocks before loading Stellarium when the selected location is currently day', async () => {
