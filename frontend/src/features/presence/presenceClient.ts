@@ -23,29 +23,23 @@ export interface PresenceSnapshot {
   cells: PresenceCell[]
 }
 
-const presenceCellSizeDeg = 0.25
-const presenceHeartbeatMs = 20_000
-
 export function quantizePresenceCoordinate(
   location: Pick<SelectedObservationLocation, 'latitudeDeg' | 'longitudeDeg'>,
+  cellSizeDeg: number,
 ): PresenceCellCoordinate {
   return {
-    latitudeDeg: quantize(location.latitudeDeg, presenceCellSizeDeg, -90, 90),
-    longitudeDeg: quantize(
-      normalizeLongitude(location.longitudeDeg),
-      presenceCellSizeDeg,
-      -180,
-      180,
-    ),
+    latitudeDeg: quantize(location.latitudeDeg, cellSizeDeg, -90, 90),
+    longitudeDeg: quantize(normalizeLongitude(location.longitudeDeg), cellSizeDeg, -180, 180),
   }
 }
 
 export function openPresenceConnection(
   session: VisitorSession,
   location: SelectedObservationLocation,
+  cellSizeDeg: number,
   webSocketFactory: typeof WebSocket = WebSocket,
 ): WebSocket {
-  const cell = quantizePresenceCoordinate(location)
+  const cell = quantizePresenceCoordinate(location, cellSizeDeg)
   const socket = new webSocketFactory(createPresenceWebSocketUrl('/presence/ws'))
 
   socket.addEventListener('open', () => {
@@ -118,12 +112,12 @@ export function parsePresenceSnapshot(value: unknown): PresenceSnapshot | null {
   return { type: 'snapshot', cells }
 }
 
-export function createPresenceHeartbeat(socket: WebSocket): number {
+export function createPresenceHeartbeat(socket: WebSocket, heartbeatSeconds: number): number {
   return window.setInterval(() => {
     if (socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ type: 'heartbeat' }))
     }
-  }, presenceHeartbeatMs)
+  }, heartbeatSeconds * 1000)
 }
 
 export function closePresenceConnection(socket: WebSocket, heartbeatId: number | null): void {

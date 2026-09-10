@@ -11,7 +11,12 @@ function mockBackend() {
     if (url === '/config/public') {
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ nightAltitudeThresholdDeg: -18 }),
+        json: () =>
+          Promise.resolve({
+            nightAltitudeThresholdDeg: -18,
+            presenceCellSizeDeg: 0.25,
+            presenceHeartbeatSeconds: 20,
+          }),
       })
     }
 
@@ -93,7 +98,6 @@ describe('App', () => {
     window.sessionStorage.setItem(
       'real-time-sky.visitor-session',
       JSON.stringify({
-        clientSessionId: 'client-1',
         participantId: 'participant-1',
         displayName: '저장된별',
         expiresAtUtcMs: Date.now() + 60_000,

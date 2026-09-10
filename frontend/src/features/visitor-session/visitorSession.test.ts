@@ -9,7 +9,6 @@ import {
 } from './visitorSession'
 
 const validSession: VisitorSession = {
-  clientSessionId: 'client-1',
   participantId: 'participant-1',
   displayName: '별친구',
   expiresAtUtcMs: 2_000,

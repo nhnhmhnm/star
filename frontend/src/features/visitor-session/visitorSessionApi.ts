@@ -1,4 +1,4 @@
-import { createClientSessionId, type VisitorSession } from './visitorSession'
+import type { VisitorSession } from './visitorSession'
 
 interface VisitorSessionResponse {
   participantId: string
@@ -32,10 +32,7 @@ export async function createVisitorSession(
   const payload: unknown = await response.json()
   const sessionResponse = parseVisitorSessionResponse(payload)
 
-  return {
-    clientSessionId: createClientSessionId(),
-    ...sessionResponse,
-  }
+  return sessionResponse
 }
 
 export function parseVisitorSessionResponse(payload: unknown): VisitorSessionResponse {

@@ -1,15 +1,19 @@
 import type { SelectedObservationLocation } from '../app/observation/observationState'
 import { useObservationPresence } from '../features/presence/useObservationPresence'
 import type { VisitorSession } from '../features/visitor-session/visitorSession'
+import type { PublicAppConfig } from '../shared/api/publicConfig'
 import styles from './SkyViewerPage.module.css'
 
 interface SkyViewerPageProps {
+  config: PublicAppConfig
   selectedLocation: SelectedObservationLocation
   visitorSession: VisitorSession
 }
 
-export function SkyViewerPage({ selectedLocation, visitorSession }: SkyViewerPageProps) {
+export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyViewerPageProps) {
   const presenceStatus = useObservationPresence({
+    cellSizeDeg: config.presenceCellSizeDeg,
+    heartbeatSeconds: config.presenceHeartbeatSeconds,
     location: selectedLocation,
     session: visitorSession,
   })

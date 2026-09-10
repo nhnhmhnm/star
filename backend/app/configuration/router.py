@@ -10,6 +10,8 @@ router = APIRouter(prefix="/config", tags=["config"])
 
 class PublicConfigResponse(BaseModel):
     nightAltitudeThresholdDeg: float
+    presenceCellSizeDeg: float
+    presenceHeartbeatSeconds: int
 
 
 @router.get("/public", response_model=PublicConfigResponse)
@@ -18,4 +20,6 @@ def read_public_config(
 ) -> PublicConfigResponse:
     return PublicConfigResponse(
         nightAltitudeThresholdDeg=settings.night_altitude_threshold_deg,
+        presenceCellSizeDeg=settings.presence_cell_size_deg,
+        presenceHeartbeatSeconds=settings.presence_heartbeat_seconds,
     )

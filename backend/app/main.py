@@ -18,6 +18,10 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
     resolved_settings = settings or get_settings()
     app = FastAPI(title=resolved_settings.app_name)
 
+    # Every route must use the same settings instance as the app composition boundary.
+    # This also keeps test applications isolated from cached process-wide settings.
+    app.dependency_overrides[get_settings] = lambda: resolved_settings
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=resolved_settings.allowed_origins,

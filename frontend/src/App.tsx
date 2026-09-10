@@ -68,7 +68,10 @@ function RoutedApp() {
   }, [route.path, selectedLocationCanOpenSky])
 
   const shouldShowSky =
-    route.path === '/sky' && selectedLocation !== null && selectedLocationCanOpenSky
+    route.path === '/sky' &&
+    selectedLocation !== null &&
+    config !== null &&
+    selectedLocationCanOpenSky
 
   if (!visitorSession.session) {
     return (
@@ -88,6 +91,7 @@ function RoutedApp() {
     >
       {shouldShowSky ? (
         <SkyViewerPage
+          config={config}
           selectedLocation={selectedLocation}
           visitorSession={visitorSession.session}
         />

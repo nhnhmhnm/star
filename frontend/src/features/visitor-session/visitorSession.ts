@@ -1,5 +1,4 @@
 export interface VisitorSession {
-  clientSessionId: string
   participantId: string
   displayName: string
   expiresAtUtcMs: number
@@ -57,17 +56,12 @@ export function clearStoredVisitorSession(): void {
   window.sessionStorage.removeItem(visitorSessionStorageKey)
 }
 
-export function createClientSessionId(): string {
-  return window.crypto.randomUUID()
-}
-
 function isVisitorSession(value: unknown): value is VisitorSession {
   if (!isRecord(value)) {
     return false
   }
 
   return (
-    typeof value.clientSessionId === 'string' &&
     typeof value.participantId === 'string' &&
     typeof value.displayName === 'string' &&
     typeof value.expiresAtUtcMs === 'number' &&

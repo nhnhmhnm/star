@@ -129,11 +129,21 @@
           "nightAltitudeThresholdDeg": {
             "type": "number",
             "title": "Nightaltitudethresholddeg"
+          },
+          "presenceCellSizeDeg": {
+            "type": "number",
+            "title": "Presencecellsizedeg"
+          },
+          "presenceHeartbeatSeconds": {
+            "type": "integer",
+            "title": "Presenceheartbeatseconds"
           }
         },
         "type": "object",
         "required": [
-          "nightAltitudeThresholdDeg"
+          "nightAltitudeThresholdDeg",
+          "presenceCellSizeDeg",
+          "presenceHeartbeatSeconds"
         ],
         "title": "PublicConfigResponse"
       },
