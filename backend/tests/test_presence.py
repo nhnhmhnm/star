@@ -76,3 +76,16 @@ def test_presence_websocket_accepts_active_visitor_session() -> None:
         assert websocket.receive_json()["type"] == "snapshot"
 
         websocket.send_json({"type": "leave"})
+
+
+def test_presence_websocket_subscribe_receives_snapshots_without_joining() -> None:
+    app = create_app(AppSettings(presence_ttl_seconds=60, presence_cell_size_deg=0.25))
+    client = TestClient(app)
+
+    with client.websocket_connect("/presence/ws") as websocket:
+        websocket.send_json({"type": "subscribe"})
+        snapshot = websocket.receive_json()
+
+        assert snapshot == {"type": "snapshot", "cells": []}
+
+        websocket.send_json({"type": "leave"})

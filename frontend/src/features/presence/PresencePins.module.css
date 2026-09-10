@@ -1,0 +1,16 @@
+.pins {
+  pointer-events: none;
+}
+
+.pins circle {
+  fill: #7ee7ff;
+  stroke: rgb(5 10 18 / 90%);
+  stroke-width: 1.2;
+}
+
+.pins text {
+  fill: #05101a;
+  font-size: 5px;
+  font-weight: 900;
+  text-anchor: middle;
+}

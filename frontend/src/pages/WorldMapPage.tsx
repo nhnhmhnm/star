@@ -9,6 +9,7 @@ import { getNightEligibility } from '../features/night-eligibility/nightEligibil
 import { localPlaceSearchProvider } from '../features/place-search/localPlaceSearchProvider'
 import { PlaceSearchBox } from '../features/place-search/PlaceSearchBox'
 import type { PlaceSearchResult } from '../features/place-search/placeSearch'
+import { usePresenceMap } from '../features/presence/usePresenceMap'
 import type { PublicAppConfig } from '../shared/api/publicConfig'
 import styles from './WorldMapPage.module.css'
 
@@ -20,6 +21,7 @@ interface WorldMapPageProps {
 export function WorldMapPage({ config, configError }: WorldMapPageProps) {
   const observationDispatch = useObservationDispatch()
   const observation = useObservationState()
+  const presenceMap = usePresenceMap()
   const [mapFocusRequest, setMapFocusRequest] = useState<MapFocusRequest | null>(null)
   const selectedLocation = observation.selectedLocation
   const selectedEligibility =
@@ -62,6 +64,7 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
           key={mapFocusRequest?.id ?? 'static-world-map'}
           focusRequest={mapFocusRequest}
           nightAltitudeThresholdDeg={config?.nightAltitudeThresholdDeg ?? null}
+          presenceCells={presenceMap.cells}
           selectedCoordinate={selectedLocation}
           onCoordinateSelect={selectObservationCoordinate}
         />
@@ -83,6 +86,10 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
           지도 밝기는 입장 시각의 태양 고도를 계산한 안내 레이어입니다. 관측 가능 여부는 클릭한
           좌표에서 현재 시각으로 다시 판정합니다.
         </p>
+        <p className={styles.presenceStatus} aria-live="polite">
+          관측자 핀: {formatPresenceMapStatus(presenceMap.status)} · 현재 셀{' '}
+          {presenceMap.cells.length}개
+        </p>
         <PlaceSearchBox
           provider={localPlaceSearchProvider}
           onResultSelect={moveMapToSearchResult}
@@ -97,4 +104,17 @@ export function WorldMapPage({ config, configError }: WorldMapPageProps) {
       </aside>
     </section>
   )
+}
+
+function formatPresenceMapStatus(status: ReturnType<typeof usePresenceMap>['status']): string {
+  switch (status) {
+    case 'connecting':
+      return '연결 중'
+    case 'connected':
+      return '연결됨'
+    case 'disconnected':
+      return '연결 종료'
+    case 'unavailable':
+      return '연결 불가'
+  }
 }

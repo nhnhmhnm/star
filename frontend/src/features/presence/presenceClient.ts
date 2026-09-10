@@ -6,6 +6,23 @@ export interface PresenceCellCoordinate {
   longitudeDeg: number
 }
 
+export interface PresenceMember {
+  participantId: string
+  displayName: string
+}
+
+export interface PresenceCell {
+  cellId: string
+  latitudeDeg: number
+  longitudeDeg: number
+  members: PresenceMember[]
+}
+
+export interface PresenceSnapshot {
+  type: 'snapshot'
+  cells: PresenceCell[]
+}
+
 const presenceCellSizeDeg = 0.25
 const presenceHeartbeatMs = 20_000
 
@@ -45,6 +62,62 @@ export function openPresenceConnection(
   return socket
 }
 
+export function openPresenceSubscription(
+  webSocketFactory: typeof WebSocket = WebSocket,
+): WebSocket {
+  const socket = new webSocketFactory(createPresenceWebSocketUrl('/presence/ws'))
+
+  socket.addEventListener('open', () => {
+    socket.send(JSON.stringify({ type: 'subscribe' }))
+  })
+
+  return socket
+}
+
+export function parsePresenceSnapshot(value: unknown): PresenceSnapshot | null {
+  if (!isRecord(value) || value.type !== 'snapshot' || !Array.isArray(value.cells)) {
+    return null
+  }
+
+  const cells = value.cells.flatMap((cell): PresenceCell[] => {
+    if (
+      !isRecord(cell) ||
+      typeof cell.cellId !== 'string' ||
+      typeof cell.latitudeDeg !== 'number' ||
+      typeof cell.longitudeDeg !== 'number' ||
+      !Array.isArray(cell.members)
+    ) {
+      return []
+    }
+
+    return [
+      {
+        cellId: cell.cellId,
+        latitudeDeg: cell.latitudeDeg,
+        longitudeDeg: cell.longitudeDeg,
+        members: cell.members.flatMap((member): PresenceMember[] => {
+          if (
+            !isRecord(member) ||
+            typeof member.participantId !== 'string' ||
+            typeof member.displayName !== 'string'
+          ) {
+            return []
+          }
+
+          return [
+            {
+              participantId: member.participantId,
+              displayName: member.displayName,
+            },
+          ]
+        }),
+      },
+    ]
+  })
+
+  return { type: 'snapshot', cells }
+}
+
 export function createPresenceHeartbeat(socket: WebSocket): number {
   return window.setInterval(() => {
     if (socket.readyState === WebSocket.OPEN) {
@@ -81,4 +154,8 @@ function normalizeLongitude(longitudeDeg: number): number {
   const normalized = ((((longitudeDeg + 180) % 360) + 360) % 360) - 180
 
   return Object.is(normalized, -0) ? 0 : normalized
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

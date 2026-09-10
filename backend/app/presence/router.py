@@ -12,6 +12,7 @@ from app.presence.schemas import (
     PresenceLeaveMessage,
     PresenceMemberResponse,
     PresenceSnapshotMessage,
+    PresenceSubscribeMessage,
 )
 from app.presence.service import PresenceCell, PresenceService, PresenceStore
 from app.sessions.router import get_visitor_session_service
@@ -67,6 +68,20 @@ async def observe_presence(
 
     try:
         first_payload = await websocket.receive_json()
+        if first_payload.get("type") == "subscribe":
+            PresenceSubscribeMessage.model_validate(first_payload)
+            await websocket.send_json(serialize_snapshot(presence_service.snapshot()))
+
+            while True:
+                payload = await websocket.receive_json()
+                if payload.get("type") == "leave":
+                    PresenceLeaveMessage.model_validate(payload)
+                    await websocket.close()
+                    return
+
+                await websocket.close(code=status.WS_1003_UNSUPPORTED_DATA)
+                return
+
         join_message = PresenceJoinMessage.model_validate(first_payload)
         session = session_service.find_active(join_message.participant_id)
 

@@ -37,7 +37,8 @@
 
 .description,
 .status,
-.note {
+.note,
+.presenceStatus {
   margin: 14px 0 0;
   color: var(--color-muted);
 }
@@ -49,6 +50,11 @@
 .note {
   font-size: 14px;
   line-height: 1.6;
+}
+
+.presenceStatus {
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .error {

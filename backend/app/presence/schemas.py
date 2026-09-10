@@ -21,6 +21,10 @@ class PresenceLeaveMessage(BaseModel):
     type: Literal["leave"]
 
 
+class PresenceSubscribeMessage(BaseModel):
+    type: Literal["subscribe"]
+
+
 class PresenceMemberResponse(BaseModel):
     participant_id: UUID = Field(serialization_alias="participantId")
     display_name: str = Field(serialization_alias="displayName")

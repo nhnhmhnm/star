@@ -1,5 +1,7 @@
 import { geoCoordinateToMapPoint, type GeoCoordinate } from './mapProjection'
 import { MapLightingOverlay } from '../map-lighting/MapLightingOverlay'
+import { PresencePins } from '../presence/PresencePins'
+import type { PresenceCell } from '../presence/presenceClient'
 import styles from './StaticWorldMap.module.css'
 import { useStaticWorldMap, type MapFocusRequest } from './useStaticWorldMap'
 
@@ -9,6 +11,7 @@ interface StaticWorldMapProps {
   focusRequest?: MapFocusRequest | null
   nightAltitudeThresholdDeg?: number | null
   onCoordinateSelect?: (coordinate: GeoCoordinate) => void
+  presenceCells?: PresenceCell[]
   selectedCoordinate?: GeoCoordinate | null
 }
 
@@ -16,6 +19,7 @@ export function StaticWorldMap({
   focusRequest = null,
   nightAltitudeThresholdDeg = null,
   onCoordinateSelect,
+  presenceCells = [],
   selectedCoordinate = null,
 }: StaticWorldMapProps) {
   const map = useStaticWorldMap(focusRequest?.center, focusRequest?.zoom, { onCoordinateSelect })
@@ -59,6 +63,7 @@ export function StaticWorldMap({
           <polygon points="122,150 220,148 275,160 240,172 142,170" />
         </g>
         <MapLightingOverlay nightAltitudeThresholdDeg={nightAltitudeThresholdDeg} />
+        <PresencePins cells={presenceCells} />
         <g className={styles.labels} aria-hidden="true">
           <text x="70" y="56">
             North America
