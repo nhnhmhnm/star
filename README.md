@@ -1,59 +1,83 @@
-# Real Time Sky 기획 문서
+# Real Time Sky
 
-**지금 밤인 장소를 지도에서 클릭해, 그곳의 현재 하늘을 감상하는 웹 서비스.**
+세계지도에서 지금 천문학적으로 밤인 위치를 선택하고, 그 장소의 현재 하늘을 함께 감상하는 개인 웹 프로젝트입니다.
 
-기획 문서를 기준으로 개발을 시작했다. 구현은 커밋별 계획에 맞춰 작은 단위로 진행하며, 원격 푸시·배포는 별도 작업으로 다룬다.
+시간은 항상 현재 UTC를 따릅니다. 사용자가 시간을 멈추거나 배속을 바꾸거나 과거·미래로 이동하는 기능은 두지 않습니다. 기본 관측 기준은 태양 중심의 기하 고도 `-18° 이하`이며 백엔드 환경 변수로 변경할 수 있습니다.
 
-## 확정한 제품 방향
+## 현재 구현 상태
 
-- 낮인 위치에서는 하늘을 볼 수 없다. 현재 밤 조건을 충족하는 장소만 진입한다.
-- 시간은 항상 현재를 따른다. 배속·일시정지·과거/미래 이동 기능은 제공하지 않는다.
-- 일반적인 Google Maps처럼 세계지도를 확대·축소하고 드래그/스와이프로 이동한다.
-- 장소 검색 결과를 선택하면 해당 지역으로 이동·확대한다. 검색만으로 관측 위치를 확정하지 않는다.
-- 마지막 지도 클릭(모바일 tap)으로 위도·경도를 확정한다. 좌표는 읽기 전용으로 보여준다.
-- 하늘에서는 시선을 돌리고 확대·축소하며 별자리 선·이름을 확인한다.
-- 첫 진입에서 닉네임을 정하고, 실제로 밤하늘을 보고 있는 사용자의 근사 관측 위치를 세계지도 핀으로 확인한다.
+- 닉네임으로 임시 방문 세션 생성
+- 확대·축소·드래그와 클릭 좌표 선택이 가능한 정적 세계지도
+- 로컬 장소 검색 결과로 지도 이동
+- 현재 태양 고도에 따른 낮·박명·밤 음영과 동일한 밤 상태색
+- 밤인 좌표에서만 하늘 페이지 진입
+- WebSocket 기반 관측 상태와 0.25° 기본 격자의 관측자 핀
+- Stellarium Web Engine의 좌표·현재 시각·대기·별자리 렌더링 실험 완료
 
-밤 조건의 기본값은 **태양 중심의 기하 고도 -18° 이하**다. 박명이 남은 곳도 진입을 막는다. 이 값은 백엔드 환경 변수로 한 곳에서 관리해 나중에 코드 수정 없이 바꿀 수 있게 하며, 감상 중 기준을 넘으면 하늘 표시를 종료하고 다른 밤 위치 선택으로 안내한다.
+정식 하늘 페이지의 Stellarium 연결은 아직 진행 중입니다. 현재 하늘 페이지에는 선택 좌표와 관측 상태가 표시됩니다.
 
-## 기상 반영 제안
+## 기술 구성
 
-운량·날씨 코드 등 최신 기상 데이터를 이용한 상태 안내와 구름 표현을 검토한다. 실제 구름 모양을 그대로 재현하는 기능은 아니다. 기상 데이터 기준 시각을 표시하고 누락·지연 시에는 기상 미반영을 알린다. 상세 범위는 [기상 반영 검토안](./docs/weather-integration.md)을 따른다.
+- 프론트엔드: TypeScript, React, Vite
+- 백엔드: Python, FastAPI, Pydantic
+- 실시간 상태: WebSocket, 프로세스 메모리 TTL 저장소
+- 하늘 렌더링: Stellarium Web Engine JS/WASM
 
-## 문서 목록
+구성 요소와 데이터 흐름은 [서비스 구조](./docs/architecture.md)에 정리되어 있습니다.
 
-1. [제품 요구사항](./docs/product-requirements.md)
-2. [기술 설계](./docs/technical-design.md)
-3. [UI·UX 명세](./docs/ui-ux-spec.md)
-4. [데이터·인터페이스](./docs/data-and-interface.md)
-5. [커밋별 구현 계획](./docs/implementation-plan.md)
-6. [향후 검증 계획](./docs/test-plan.md)
-7. [결정·위험 관리](./docs/decisions-and-risks.md)
-8. [검토 결과·공식 근거](./docs/review-and-sources.md)
-9. [기상 반영 검토안](./docs/weather-integration.md)
-10. [개발 언어·진행 방식·커밋 규칙](./docs/development-guide.md)
-11. [객체지향 설계와 변경 경계](./docs/object-oriented-design.md)
-12. [Stellarium Web Engine 공급 기준](./docs/stellarium-engine.md)
-13. [닉네임·실시간 관측자 핀](./docs/presence-and-chat.md)
-14. [Stellarium Web Engine 검증 결과](./docs/stellarium-validation.md)
-15. [지도·검색 제공자 선택 근거](./docs/map-provider-decision.md)
+## 로컬 실행
 
-이전 검토의 낮 진입 허용·시간 조절·직접 좌표 입력안은 현재 제품 방향에서 제외했다.
+Node.js 22.14.0, Python 3.13, [uv](https://docs.astral.sh/uv/)가 필요합니다.
 
-## 지도와 하늘의 밝기
+백엔드:
 
-메인 지도는 낮 중심부가 밝고 박명까지 부드럽게 어두워지는 밝기장을 보여준다. 가능하면 현재 시각을 주기적으로 반영하지만, 무료 지도 구현이나 성능 제약이 커지면 세계지도 입장 시각의 밝기 스냅샷으로 고정해도 된다. **설정된 밤 기준 이하의 모든 관측 가능 영역에는 동일한 밤 색상·투명도**를 적용한다. 기본 경계는 -18°이며 밤 안에서 추가 밝기 차이를 주지 않는다. 지명·도로·관측자 핀의 가독성을 유지한다.
+```powershell
+cd backend
+python -m uv sync
+python -m uv run uvicorn app.main:app --reload
+```
 
-하늘 뷰어는 이 지도 색과 별개다. 대기를 켠 Stellarium 렌더링을 사용하므로 밤 배경이 항상 같은 검정은 아니며 태양·달·대기 설정에 따른 차이를 유지한다.
+프론트엔드:
 
-## 앞으로의 개발 기준
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
-프론트엔드는 **TypeScript + React + Vite**, 백엔드는 사용자가 선택한 **Python + FastAPI**를 사용한다. 실시간 관측자 상태와 공개 설정을 위해 API를 초기 단계부터 도입하고, 첫 버전은 계정 DB 없이 메모리 TTL 상태를 사용한다.
+브라우저에서 `http://localhost:5173`을 엽니다. Vite 개발 서버가 `/config`, `/sessions`, `/presence` 요청을 `http://127.0.0.1:8000`으로 전달합니다.
 
-지도는 돈을 쓰지 않는 개인 로컬호스트 프로젝트 기준으로 개발한다. 우선 후보는 **MapLibre GL JS + 무료 개발용 지도 스타일/타일**이며, 토큰이 없어도 정적 세계지도 fallback으로 핵심 흐름을 검증할 수 있게 한다. Google Maps, Mapbox 무료 구간, 네이버, 카카오는 품질 보강 후보로만 남기고 결제 활성화나 초과 과금 가능성이 있으면 기본 구현에 넣지 않는다.
+## 주요 환경 변수
 
-저장소는 **docs / backend / frontend**로 나눈다. docs는 기획·설계, backend는 Python API, frontend는 웹 화면과 Stellarium 연결을 맡는다. Git은 루트 하나에서 관리하고 각 앱의 의존성·실행·배포는 분리한다. [내부 폴더 배치와 계약 관리](./docs/development-guide.md#3-저장소-구조)
+`backend/.env.example`을 `backend/.env`로 복사해 로컬 값을 변경할 수 있습니다.
 
-진행 순서는 `엔진 최소 검증 → 백엔드·공개 설정 → 닉네임과 앱 기반 → 메인 세계지도 → 관측자 핀 → 밤하늘 상세 페이지 → 기상 → 품질 검증`이다. 한 기능 단위를 구현·검증한 뒤 `feat(map): 세계지도 확대와 이동 기능 추가`처럼 타입·scope는 영어, 설명·본문은 한글로 커밋한다. 구체적인 범위·완료 기준·예정 메시지는 커밋별 구현 계획을 따른다.
+| 변수 | 기본값 | 역할 |
+| --- | ---: | --- |
+| `NIGHT_ALTITUDE_THRESHOLD_DEG` | `-18` | 밤하늘 진입 태양 고도 경계 |
+| `VISITOR_SESSION_TTL_SECONDS` | `43200` | 닉네임 방문 세션 수명 |
+| `PRESENCE_HEARTBEAT_SECONDS` | `20` | 관측 상태 갱신 간격 |
+| `PRESENCE_TTL_SECONDS` | `60` | 끊긴 관측 상태의 서버 만료 시간 |
+| `PRESENCE_CELL_SIZE_DEG` | `0.25` | 지도에 공개할 근사 위치 격자 크기 |
 
-유지보수는 역할별 인터페이스·의존성 주입·합성을 기준으로 설계한다. 지도·엔진·기상 연동은 어댑터로 분리하고, React 화면은 함수 컴포넌트, 밤 판정·좌표 변환은 순수 함수로 유지한다. [객체지향 설계](./docs/object-oriented-design.md)
+## 검증
+
+```powershell
+cd frontend
+npm run lint
+npm run test:run
+npm run build
+```
+
+```powershell
+cd backend
+python -m uv run ruff format --check .
+python -m uv run ruff check .
+python -m uv run mypy app tests scripts
+python -m uv run pytest
+```
+
+## 데이터 범위
+
+계정과 관측 이력은 저장하지 않습니다. 닉네임 세션과 관측자 위치는 단일 백엔드 프로세스의 메모리에만 보관되며 서버가 재시작되면 사라집니다. 정확한 클릭 좌표는 관측자 API에 보내지 않고, 프론트엔드와 백엔드에서 설정된 격자 중심으로 각각 정규화합니다.
+
+이 저장소는 로컬 실행과 소수 사용자 이용을 기준으로 하며 유료 지도·검색 서비스를 기본 구성에 포함하지 않습니다.

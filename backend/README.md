@@ -26,7 +26,8 @@ uv run uvicorn app.main:app --reload
 ```
 
 The API health check is available at `GET /health`.
-The public runtime config is available at `GET /config/public`.
+The public runtime config is available at `GET /config/public` and includes the
+night threshold, presence cell size, and heartbeat interval used by the frontend.
 Visitor sessions are created with `POST /sessions/visitors`.
 
 ## Environment

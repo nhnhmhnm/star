@@ -12,4 +12,4 @@ npm run dev
 npm run build
 ```
 
-지도, 밤 판정, Stellarium Web Engine 연결은 커밋별 구현 계획에 맞춰 이후 기능 단위로 추가한다.
+현재 정적 세계지도, 장소 검색, 밤 판정, 관측 위치 선택과 presence 핀이 구현되어 있다. Stellarium Web Engine 제품 연결 전 실험은 `experiments/stellarium`에 분리되어 있다.

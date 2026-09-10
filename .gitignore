@@ -37,3 +37,6 @@ backend/htmlcov/
 # Temporary files
 tmp/
 temp/
+
+# Local planning notes
+docs/private/
