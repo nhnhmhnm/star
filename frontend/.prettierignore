@@ -4,3 +4,7 @@ coverage
 playwright-report
 test-results
 package-lock.json
+experiments/stellarium/vendor
+experiments/stellarium/public/stellarium-engine
+experiments/stellarium/public/stellarium-skydata
+experiments/stellarium/public/stellarium-fonts
