@@ -113,6 +113,13 @@ export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyV
         <div className={styles.overlay} role="status" aria-live="polite">
           <p className={styles.overlayTitle}>{formatSkyStatusTitle(sky.status)}</p>
           <p className={styles.overlayMessage}>{sky.message}</p>
+          {sky.status === 'error' ? (
+            <div className={styles.overlayActions}>
+              <button type="button" className={styles.retryButton} onClick={sky.retry}>
+                다시 시도
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

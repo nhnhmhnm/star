@@ -19,6 +19,7 @@ export interface CurrentSkyState {
   constellationLayers: SkyConstellationLayers
   view: SkyViewState
   resetView(): void
+  retry(): void
   setConstellationLabelsVisible(visible: boolean): void
   setConstellationLinesVisible(visible: boolean): void
   zoomIn(): void
@@ -41,17 +42,22 @@ export function useCurrentSkyEngine({
   nightAltitudeThresholdDeg,
 }: UseCurrentSkyEngineOptions): CurrentSkyState {
   const engineRef = useRef<SkyEngine | null>(null)
+  const [loadAttempt, setLoadAttempt] = useState(0)
   const [state, setState] = useState<CurrentSkyState>({
     status: 'loading',
     message: 'Stellarium engine is loading.',
     constellationLayers: initialConstellationLayers,
     view: { fovDeg: skyFovBounds.initialDeg },
     resetView: () => undefined,
+    retry: () => undefined,
     setConstellationLabelsVisible: () => undefined,
     setConstellationLinesVisible: () => undefined,
     zoomIn: () => undefined,
     zoomOut: () => undefined,
   })
+  const retry = useCallback(() => {
+    setLoadAttempt((currentAttempt) => currentAttempt + 1)
+  }, [])
   const syncEngineState = useCallback(() => {
     const engine = engineRef.current
 
@@ -161,6 +167,7 @@ export function useCurrentSkyEngine({
           constellationLayers: initialConstellationLayers,
           view: { fovDeg: skyFovBounds.initialDeg },
           resetView,
+          retry,
           setConstellationLabelsVisible,
           setConstellationLinesVisible,
           zoomIn,
@@ -197,6 +204,7 @@ export function useCurrentSkyEngine({
             constellationLayers: initialConstellationLayers,
             view: { fovDeg: skyFovBounds.initialDeg },
             resetView,
+            retry,
             setConstellationLabelsVisible,
             setConstellationLinesVisible,
             zoomIn,
@@ -214,6 +222,7 @@ export function useCurrentSkyEngine({
           constellationLayers: engine.getConstellationLayers(),
           view: engine.getView(),
           resetView,
+          retry,
           setConstellationLabelsVisible,
           setConstellationLinesVisible,
           zoomIn,
@@ -231,6 +240,7 @@ export function useCurrentSkyEngine({
           constellationLayers: initialConstellationLayers,
           view: { fovDeg: skyFovBounds.initialDeg },
           resetView,
+          retry,
           setConstellationLabelsVisible,
           setConstellationLinesVisible,
           zoomIn,
@@ -255,12 +265,14 @@ export function useCurrentSkyEngine({
   }, [
     canvasRef,
     createEngine,
+    loadAttempt,
     location,
     location.id,
     location.latitudeDeg,
     location.longitudeDeg,
     nightAltitudeThresholdDeg,
     resetView,
+    retry,
     setConstellationLabelsVisible,
     setConstellationLinesVisible,
     syncEngineState,

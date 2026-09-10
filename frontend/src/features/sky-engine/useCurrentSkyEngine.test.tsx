@@ -49,6 +49,9 @@ function TestViewer({
       <button type="button" onClick={sky.resetView}>
         reset
       </button>
+      <button type="button" onClick={sky.retry}>
+        retry
+      </button>
       <button type="button" onClick={() => sky.setConstellationLinesVisible(false)}>
         hide lines
       </button>
@@ -142,6 +145,25 @@ describe('useCurrentSkyEngine', () => {
       labelsVisible: false,
       linesVisible: false,
     })
+  })
+
+  it('can retry after the Stellarium engine fails to load', async () => {
+    const engine = createFakeEngine()
+    const createEngine = vi
+      .fn<() => Promise<SkyEngine>>()
+      .mockRejectedValueOnce(new Error('engine missing'))
+      .mockResolvedValueOnce(engine)
+
+    render(<TestViewer createEngine={createEngine} location={nightLocation} />)
+
+    expect(await screen.findByText('error')).toBeInTheDocument()
+    expect(screen.getByText('engine missing')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'retry' }))
+
+    expect(await screen.findByText('ready')).toBeInTheDocument()
+    expect(createEngine).toHaveBeenCalledTimes(2)
+    expect(engine.startRealtimeSync).toHaveBeenCalledOnce()
   })
 
   it('blocks before loading Stellarium when the selected location is currently day', async () => {
