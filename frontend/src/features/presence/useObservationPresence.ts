@@ -12,6 +12,7 @@ export type PresenceConnectionStatus = 'connecting' | 'connected' | 'disconnecte
 
 interface UseObservationPresenceOptions {
   cellSizeDeg: number
+  enabled?: boolean
   heartbeatSeconds: number
   location: SelectedObservationLocation
   session: VisitorSession
@@ -20,14 +21,21 @@ interface UseObservationPresenceOptions {
 
 export function useObservationPresence({
   cellSizeDeg,
+  enabled = true,
   heartbeatSeconds,
   location,
   session,
   webSocketFactory = WebSocket,
 }: UseObservationPresenceOptions): PresenceConnectionStatus {
-  const [status, setStatus] = useState<PresenceConnectionStatus>('connecting')
+  const [status, setStatus] = useState<PresenceConnectionStatus>(
+    enabled ? 'connecting' : 'disconnected',
+  )
 
   useEffect(() => {
+    if (!enabled) {
+      return undefined
+    }
+
     const socket = openPresenceConnection(session, location, cellSizeDeg, webSocketFactory)
     const heartbeatId = createPresenceHeartbeat(socket, heartbeatSeconds)
 
@@ -38,7 +46,7 @@ export function useObservationPresence({
     return () => {
       closePresenceConnection(socket, heartbeatId)
     }
-  }, [cellSizeDeg, heartbeatSeconds, location, session, webSocketFactory])
+  }, [cellSizeDeg, enabled, heartbeatSeconds, location, session, webSocketFactory])
 
-  return status
+  return enabled ? status : 'disconnected'
 }

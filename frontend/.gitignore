@@ -12,6 +12,9 @@ dist
 dist-stellarium
 dist-ssr
 *.local
+public/stellarium-engine/
+public/stellarium-fonts/
+public/stellarium-skydata/
 
 # Editor directories and files
 .vscode/*
