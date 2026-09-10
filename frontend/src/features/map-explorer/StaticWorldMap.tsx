@@ -1,10 +1,14 @@
 import styles from './StaticWorldMap.module.css'
-import { useStaticWorldMap } from './useStaticWorldMap'
+import { useStaticWorldMap, type MapFocusRequest } from './useStaticWorldMap'
 
 const graticuleValues = [-120, -60, 0, 60, 120]
 
-export function StaticWorldMap() {
-  const map = useStaticWorldMap()
+interface StaticWorldMapProps {
+  focusRequest?: MapFocusRequest | null
+}
+
+export function StaticWorldMap({ focusRequest = null }: StaticWorldMapProps) {
+  const map = useStaticWorldMap(focusRequest?.center, focusRequest?.zoom)
 
   return (
     <div className={styles.mapShell}>

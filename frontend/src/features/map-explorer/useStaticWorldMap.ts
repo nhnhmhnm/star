@@ -24,9 +24,19 @@ const initialCenter: GeoCoordinate = {
   longitudeDeg: 0,
 }
 
-export function useStaticWorldMap() {
-  const [center, setCenter] = useState(initialCenter)
-  const [zoom, setZoom] = useState(minMapZoom)
+export interface MapFocusRequest {
+  id: string
+  center: GeoCoordinate
+  zoom: number
+}
+
+export function useStaticWorldMap(
+  initialMapCenter: GeoCoordinate = initialCenter,
+  initialMapZoom: number = minMapZoom,
+) {
+  const initialZoom = clampZoom(initialMapZoom)
+  const [center, setCenter] = useState(() => clampMapCenter(initialMapCenter, initialZoom))
+  const [zoom, setZoom] = useState(initialZoom)
   const dragState = useRef<DragState | null>(null)
 
   const viewBox = useMemo(() => {
