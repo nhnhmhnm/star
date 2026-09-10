@@ -14,6 +14,8 @@ export interface SkyEngine {
 }
 
 export interface SkyViewState {
+  altitudeDeg: number
+  azimuthDeg: number
   fovDeg: number
 }
 
@@ -68,10 +70,14 @@ interface StellariumModule {
 const initialFovDeg = 70
 const initialAltitudeDeg = 45
 const initialAzimuthDeg = 0
+const viewAngleToleranceDeg = 0.1
 export const skyFovBounds = {
   minimumDeg: 20,
   maximumDeg: 120,
   initialDeg: initialFovDeg,
+}
+export const skyAltitudeBounds = {
+  fixedDeg: initialAltitudeDeg,
 }
 
 export async function createStellariumSkyEngine({
@@ -147,6 +153,8 @@ class StellariumAdapter implements SkyEngine {
 
   getView(): SkyViewState {
     return {
+      altitudeDeg: this.engine.observer.pitch / this.engine.D2R,
+      azimuthDeg: normalizeAzimuthDeg(this.engine.observer.yaw / this.engine.D2R),
       fovDeg: this.engine.core.fov / this.engine.D2R,
     }
   }
@@ -176,9 +184,14 @@ class StellariumAdapter implements SkyEngine {
 
   enforceViewBounds(): void {
     const currentFovDeg = this.engine.core.fov / this.engine.D2R
+    const currentAltitudeDeg = this.engine.observer.pitch / this.engine.D2R
 
     if (currentFovDeg < skyFovBounds.minimumDeg || currentFovDeg > skyFovBounds.maximumDeg) {
       this.setFovDeg(currentFovDeg)
+    }
+
+    if (Math.abs(currentAltitudeDeg - skyAltitudeBounds.fixedDeg) > viewAngleToleranceDeg) {
+      this.engine.observer.pitch = skyAltitudeBounds.fixedDeg * this.engine.D2R
     }
   }
 
@@ -215,4 +228,8 @@ class StellariumAdapter implements SkyEngine {
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.min(Math.max(value, minimum), maximum)
+}
+
+export function normalizeAzimuthDeg(azimuthDeg: number): number {
+  return ((azimuthDeg % 360) + 360) % 360
 }

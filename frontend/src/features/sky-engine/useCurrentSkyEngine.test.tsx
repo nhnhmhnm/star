@@ -70,7 +70,7 @@ function createFakeEngine(initialFovDeg = 70): SkyEngine {
     dispose: vi.fn(),
     enforceViewBounds: vi.fn(),
     getConstellationLayers: vi.fn(() => constellationLayers),
-    getView: vi.fn(() => ({ fovDeg })),
+    getView: vi.fn(() => ({ altitudeDeg: 45, azimuthDeg: 0, fovDeg })),
     resetView: vi.fn(() => {
       fovDeg = 70
     }),

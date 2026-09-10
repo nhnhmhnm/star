@@ -7,6 +7,7 @@ import {
   type CreateStellariumSkyEngineOptions,
   type SkyConstellationLayers,
   type SkyEngine,
+  skyAltitudeBounds,
   skyFovBounds,
   type SkyViewState,
 } from './StellariumAdapter'
@@ -34,6 +35,11 @@ interface UseCurrentSkyEngineOptions {
 }
 
 const initialConstellationLayers = { labelsVisible: true, linesVisible: true }
+const initialSkyView = {
+  altitudeDeg: skyAltitudeBounds.fixedDeg,
+  azimuthDeg: 0,
+  fovDeg: skyFovBounds.initialDeg,
+}
 
 export function useCurrentSkyEngine({
   canvasRef,
@@ -47,7 +53,7 @@ export function useCurrentSkyEngine({
     status: 'loading',
     message: 'Stellarium engine is loading.',
     constellationLayers: initialConstellationLayers,
-    view: { fovDeg: skyFovBounds.initialDeg },
+    view: initialSkyView,
     resetView: () => undefined,
     retry: () => undefined,
     setConstellationLabelsVisible: () => undefined,
@@ -148,7 +154,7 @@ export function useCurrentSkyEngine({
         status: 'loading',
         message: 'Stellarium engine is loading.',
         constellationLayers: initialConstellationLayers,
-        view: { fovDeg: skyFovBounds.initialDeg },
+        view: initialSkyView,
       }))
 
       const entryCheck = getNightEligibility(
@@ -165,7 +171,7 @@ export function useCurrentSkyEngine({
           status: 'blocked',
           message: formatBlockedMessage(entryCheck.solarAltitudeDeg, nightAltitudeThresholdDeg),
           constellationLayers: initialConstellationLayers,
-          view: { fovDeg: skyFovBounds.initialDeg },
+          view: initialSkyView,
           resetView,
           retry,
           setConstellationLabelsVisible,
@@ -202,7 +208,7 @@ export function useCurrentSkyEngine({
               nightAltitudeThresholdDeg,
             ),
             constellationLayers: initialConstellationLayers,
-            view: { fovDeg: skyFovBounds.initialDeg },
+            view: initialSkyView,
             resetView,
             retry,
             setConstellationLabelsVisible,
@@ -238,7 +244,7 @@ export function useCurrentSkyEngine({
           status: 'error',
           message: error instanceof Error ? error.message : 'Stellarium engine failed to load.',
           constellationLayers: initialConstellationLayers,
-          view: { fovDeg: skyFovBounds.initialDeg },
+          view: initialSkyView,
           resetView,
           retry,
           setConstellationLabelsVisible,

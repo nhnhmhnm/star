@@ -3,7 +3,7 @@ import { useRef } from 'react'
 import type { SelectedObservationLocation } from '../app/observation/observationState'
 import { useObservationPresence } from '../features/presence/useObservationPresence'
 import { useCurrentSkyEngine } from '../features/sky-engine/useCurrentSkyEngine'
-import { skyFovBounds } from '../features/sky-engine/StellariumAdapter'
+import { normalizeAzimuthDeg, skyFovBounds } from '../features/sky-engine/StellariumAdapter'
 import type { VisitorSession } from '../features/visitor-session/visitorSession'
 import type { PublicAppConfig } from '../shared/api/publicConfig'
 import styles from './SkyViewerPage.module.css'
@@ -84,6 +84,10 @@ export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyV
               </button>
               <span className={styles.fovValue}>FOV {Math.round(sky.view.fovDeg)}°</span>
             </div>
+            <p className={styles.viewHint} aria-live="polite">
+              방향 {formatCardinalDirection(sky.view.azimuthDeg)} · 고도{' '}
+              {Math.round(sky.view.altitudeDeg)}° 고정
+            </p>
             <div className={styles.layerControls} aria-label="별자리 표시">
               <button
                 type="button"
@@ -124,6 +128,24 @@ export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyV
       ) : null}
     </section>
   )
+}
+
+function formatCardinalDirection(azimuthDeg: number): string {
+  const normalizedAzimuthDeg = normalizeAzimuthDeg(azimuthDeg)
+
+  if (normalizedAzimuthDeg >= 315 || normalizedAzimuthDeg < 45) {
+    return '북'
+  }
+
+  if (normalizedAzimuthDeg < 135) {
+    return '동'
+  }
+
+  if (normalizedAzimuthDeg < 225) {
+    return '남'
+  }
+
+  return '서'
 }
 
 function formatPresenceStatus(status: ReturnType<typeof useObservationPresence>): string {
