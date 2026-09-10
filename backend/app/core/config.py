@@ -15,6 +15,9 @@ class AppSettings(BaseSettings):
     )
     night_altitude_threshold_deg: float = Field(default=-18.0, ge=-90.0, le=0.0)
     visitor_session_ttl_seconds: int = Field(default=43_200, ge=60, le=86_400)
+    presence_heartbeat_seconds: int = Field(default=20, ge=5, le=120)
+    presence_ttl_seconds: int = Field(default=60, ge=10, le=600)
+    presence_cell_size_deg: float = Field(default=0.25, gt=0.0, le=5.0)
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -8,6 +8,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/config': 'http://127.0.0.1:8000',
+      '/presence': {
+        target: 'ws://127.0.0.1:8000',
+        ws: true,
+      },
       '/sessions': 'http://127.0.0.1:8000',
     },
   },

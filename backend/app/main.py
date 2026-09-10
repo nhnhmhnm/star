@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.configuration.router import router as configuration_router
 from app.core.config import AppSettings, get_settings
+from app.presence.router import router as presence_router
 from app.sessions.router import router as sessions_router
 
 
@@ -35,6 +36,7 @@ def create_app(settings: AppSettings | None = None) -> FastAPI:
 
     app.include_router(configuration_router)
     app.include_router(sessions_router)
+    app.include_router(presence_router)
 
     return app
 

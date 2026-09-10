@@ -35,6 +35,9 @@ Visitor sessions are created with `POST /sessions/visitors`.
 The default is `-18`, which means astronomically dark night.
 `VISITOR_SESSION_TTL_SECONDS` controls the lifetime of a temporary nickname session.
 The default is `43200`, or 12 hours.
+`PRESENCE_HEARTBEAT_SECONDS`, `PRESENCE_TTL_SECONDS`, and `PRESENCE_CELL_SIZE_DEG`
+control the real-time observation presence heartbeat, server expiry, and approximate
+public location grid.
 
 ## Quality Checks
 

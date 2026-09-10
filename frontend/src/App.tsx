@@ -87,7 +87,10 @@ function RoutedApp() {
       displayName={visitorSession.session.displayName}
     >
       {shouldShowSky ? (
-        <SkyViewerPage selectedLocation={selectedLocation} />
+        <SkyViewerPage
+          selectedLocation={selectedLocation}
+          visitorSession={visitorSession.session}
+        />
       ) : (
         <WorldMapPage config={config} configError={configError} />
       )}
