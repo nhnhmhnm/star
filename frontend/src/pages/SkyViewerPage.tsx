@@ -51,38 +51,62 @@ export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyV
           관측 상태: {formatPresenceStatus(presenceStatus)}
         </p>
         {sky.status === 'ready' ? (
-          <div className={styles.controls} aria-label="하늘 방향과 확대 조작">
-            <button
-              type="button"
-              className={styles.controlButton}
-              onClick={sky.zoomOut}
-              disabled={sky.view.fovDeg >= skyFovBounds.maximumDeg}
-              aria-label="축소"
-              title="축소"
-            >
-              −
-            </button>
-            <button
-              type="button"
-              className={styles.controlButton}
-              onClick={sky.resetView}
-              aria-label="초기 시선으로 복구"
-              title="초기 시선으로 복구"
-            >
-              ↺
-            </button>
-            <button
-              type="button"
-              className={styles.controlButton}
-              onClick={sky.zoomIn}
-              disabled={sky.view.fovDeg <= skyFovBounds.minimumDeg}
-              aria-label="확대"
-              title="확대"
-            >
-              +
-            </button>
-            <span className={styles.fovValue}>FOV {Math.round(sky.view.fovDeg)}°</span>
-          </div>
+          <>
+            <div className={styles.controls} aria-label="하늘 방향과 확대 조작">
+              <button
+                type="button"
+                className={styles.controlButton}
+                onClick={sky.zoomOut}
+                disabled={sky.view.fovDeg >= skyFovBounds.maximumDeg}
+                aria-label="축소"
+                title="축소"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                className={styles.controlButton}
+                onClick={sky.resetView}
+                aria-label="초기 시선으로 복구"
+                title="초기 시선으로 복구"
+              >
+                ↺
+              </button>
+              <button
+                type="button"
+                className={styles.controlButton}
+                onClick={sky.zoomIn}
+                disabled={sky.view.fovDeg <= skyFovBounds.minimumDeg}
+                aria-label="확대"
+                title="확대"
+              >
+                +
+              </button>
+              <span className={styles.fovValue}>FOV {Math.round(sky.view.fovDeg)}°</span>
+            </div>
+            <div className={styles.layerControls} aria-label="별자리 표시">
+              <button
+                type="button"
+                className={styles.toggleButton}
+                aria-pressed={sky.constellationLayers.linesVisible}
+                onClick={() =>
+                  sky.setConstellationLinesVisible(!sky.constellationLayers.linesVisible)
+                }
+              >
+                별자리 선
+              </button>
+              <button
+                type="button"
+                className={styles.toggleButton}
+                aria-pressed={sky.constellationLayers.labelsVisible}
+                onClick={() =>
+                  sky.setConstellationLabelsVisible(!sky.constellationLayers.labelsVisible)
+                }
+              >
+                별자리 이름
+              </button>
+            </div>
+          </>
         ) : null}
       </div>
       {sky.status !== 'ready' ? (

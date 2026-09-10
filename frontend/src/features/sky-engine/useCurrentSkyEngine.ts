@@ -5,6 +5,7 @@ import { getNightEligibility } from '../night-eligibility/nightEligibility'
 import {
   createStellariumSkyEngine,
   type CreateStellariumSkyEngineOptions,
+  type SkyConstellationLayers,
   type SkyEngine,
   skyFovBounds,
   type SkyViewState,
@@ -15,8 +16,11 @@ export type CurrentSkyStatus = 'loading' | 'ready' | 'blocked' | 'error'
 export interface CurrentSkyState {
   status: CurrentSkyStatus
   message: string
+  constellationLayers: SkyConstellationLayers
   view: SkyViewState
   resetView(): void
+  setConstellationLabelsVisible(visible: boolean): void
+  setConstellationLinesVisible(visible: boolean): void
   zoomIn(): void
   zoomOut(): void
 }
@@ -28,6 +32,8 @@ interface UseCurrentSkyEngineOptions {
   nightAltitudeThresholdDeg: number
 }
 
+const initialConstellationLayers = { labelsVisible: true, linesVisible: true }
+
 export function useCurrentSkyEngine({
   canvasRef,
   createEngine = createStellariumSkyEngine,
@@ -38,12 +44,15 @@ export function useCurrentSkyEngine({
   const [state, setState] = useState<CurrentSkyState>({
     status: 'loading',
     message: 'Stellarium engine is loading.',
+    constellationLayers: initialConstellationLayers,
     view: { fovDeg: skyFovBounds.initialDeg },
     resetView: () => undefined,
+    setConstellationLabelsVisible: () => undefined,
+    setConstellationLinesVisible: () => undefined,
     zoomIn: () => undefined,
     zoomOut: () => undefined,
   })
-  const syncViewState = useCallback(() => {
+  const syncEngineState = useCallback(() => {
     const engine = engineRef.current
 
     if (!engine) {
@@ -51,7 +60,11 @@ export function useCurrentSkyEngine({
     }
 
     engine.enforceViewBounds()
-    setState((current) => ({ ...current, view: engine.getView() }))
+    setState((current) => ({
+      ...current,
+      constellationLayers: engine.getConstellationLayers(),
+      view: engine.getView(),
+    }))
   }, [])
   const setFovDelta = useCallback(
     (deltaDeg: number) => {
@@ -62,9 +75,9 @@ export function useCurrentSkyEngine({
       }
 
       engine.setFovDeg(engine.getView().fovDeg + deltaDeg)
-      syncViewState()
+      syncEngineState()
     },
-    [syncViewState],
+    [syncEngineState],
   )
   const resetView = useCallback(() => {
     const engine = engineRef.current
@@ -74,8 +87,40 @@ export function useCurrentSkyEngine({
     }
 
     engine.resetView()
-    syncViewState()
-  }, [syncViewState])
+    syncEngineState()
+  }, [syncEngineState])
+  const setConstellationLinesVisible = useCallback(
+    (visible: boolean) => {
+      const engine = engineRef.current
+
+      if (!engine) {
+        return
+      }
+
+      engine.setConstellationLayers({
+        ...engine.getConstellationLayers(),
+        linesVisible: visible,
+      })
+      syncEngineState()
+    },
+    [syncEngineState],
+  )
+  const setConstellationLabelsVisible = useCallback(
+    (visible: boolean) => {
+      const engine = engineRef.current
+
+      if (!engine) {
+        return
+      }
+
+      engine.setConstellationLayers({
+        ...engine.getConstellationLayers(),
+        labelsVisible: visible,
+      })
+      syncEngineState()
+    },
+    [syncEngineState],
+  )
   const zoomIn = useCallback(() => setFovDelta(-10), [setFovDelta])
   const zoomOut = useCallback(() => setFovDelta(10), [setFovDelta])
 
@@ -96,6 +141,7 @@ export function useCurrentSkyEngine({
         ...current,
         status: 'loading',
         message: 'Stellarium engine is loading.',
+        constellationLayers: initialConstellationLayers,
         view: { fovDeg: skyFovBounds.initialDeg },
       }))
 
@@ -112,8 +158,11 @@ export function useCurrentSkyEngine({
         setState({
           status: 'blocked',
           message: formatBlockedMessage(entryCheck.solarAltitudeDeg, nightAltitudeThresholdDeg),
+          constellationLayers: initialConstellationLayers,
           view: { fovDeg: skyFovBounds.initialDeg },
           resetView,
+          setConstellationLabelsVisible,
+          setConstellationLinesVisible,
           zoomIn,
           zoomOut,
         })
@@ -145,8 +194,11 @@ export function useCurrentSkyEngine({
               firstFrameCheck.solarAltitudeDeg,
               nightAltitudeThresholdDeg,
             ),
+            constellationLayers: initialConstellationLayers,
             view: { fovDeg: skyFovBounds.initialDeg },
             resetView,
+            setConstellationLabelsVisible,
+            setConstellationLinesVisible,
             zoomIn,
             zoomOut,
           })
@@ -159,12 +211,15 @@ export function useCurrentSkyEngine({
         setState({
           status: 'ready',
           message: 'The current sky is rendering.',
+          constellationLayers: engine.getConstellationLayers(),
           view: engine.getView(),
           resetView,
+          setConstellationLabelsVisible,
+          setConstellationLinesVisible,
           zoomIn,
           zoomOut,
         })
-        viewSyncId = window.setInterval(syncViewState, 250)
+        viewSyncId = window.setInterval(syncEngineState, 250)
       } catch (error) {
         if (disposed) {
           return
@@ -173,8 +228,11 @@ export function useCurrentSkyEngine({
         setState({
           status: 'error',
           message: error instanceof Error ? error.message : 'Stellarium engine failed to load.',
+          constellationLayers: initialConstellationLayers,
           view: { fovDeg: skyFovBounds.initialDeg },
           resetView,
+          setConstellationLabelsVisible,
+          setConstellationLinesVisible,
           zoomIn,
           zoomOut,
         })
@@ -203,7 +261,9 @@ export function useCurrentSkyEngine({
     location.longitudeDeg,
     nightAltitudeThresholdDeg,
     resetView,
-    syncViewState,
+    setConstellationLabelsVisible,
+    setConstellationLinesVisible,
+    syncEngineState,
     zoomIn,
     zoomOut,
   ])

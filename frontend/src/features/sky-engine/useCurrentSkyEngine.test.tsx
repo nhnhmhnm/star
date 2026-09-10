@@ -41,11 +41,19 @@ function TestViewer({
       <p>{sky.status}</p>
       <p>{sky.message}</p>
       <p>FOV {sky.view.fovDeg}</p>
+      <p>lines {String(sky.constellationLayers.linesVisible)}</p>
+      <p>labels {String(sky.constellationLayers.labelsVisible)}</p>
       <button type="button" onClick={sky.zoomIn}>
         zoom in
       </button>
       <button type="button" onClick={sky.resetView}>
         reset
+      </button>
+      <button type="button" onClick={() => sky.setConstellationLinesVisible(false)}>
+        hide lines
+      </button>
+      <button type="button" onClick={() => sky.setConstellationLabelsVisible(false)}>
+        hide labels
       </button>
     </>
   )
@@ -53,13 +61,18 @@ function TestViewer({
 
 function createFakeEngine(initialFovDeg = 70): SkyEngine {
   let fovDeg = initialFovDeg
+  let constellationLayers = { labelsVisible: true, linesVisible: true }
 
   return {
     dispose: vi.fn(),
     enforceViewBounds: vi.fn(),
+    getConstellationLayers: vi.fn(() => constellationLayers),
     getView: vi.fn(() => ({ fovDeg })),
     resetView: vi.fn(() => {
       fovDeg = 70
+    }),
+    setConstellationLayers: vi.fn((nextLayers) => {
+      constellationLayers = nextLayers
     }),
     setFovDeg: vi.fn((nextFovDeg: number) => {
       fovDeg = nextFovDeg
@@ -108,6 +121,27 @@ describe('useCurrentSkyEngine', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'reset' }))
     expect(engine.resetView).toHaveBeenCalledOnce()
+  })
+
+  it('exposes independent constellation line and label toggles', async () => {
+    const engine = createFakeEngine()
+    const createEngine = vi.fn<() => Promise<SkyEngine>>().mockResolvedValue(engine)
+
+    render(<TestViewer createEngine={createEngine} location={nightLocation} />)
+
+    expect(await screen.findByText('ready')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'hide lines' }))
+    expect(engine.setConstellationLayers).toHaveBeenCalledWith({
+      labelsVisible: true,
+      linesVisible: false,
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'hide labels' }))
+    expect(engine.setConstellationLayers).toHaveBeenCalledWith({
+      labelsVisible: false,
+      linesVisible: false,
+    })
   })
 
   it('blocks before loading Stellarium when the selected location is currently day', async () => {

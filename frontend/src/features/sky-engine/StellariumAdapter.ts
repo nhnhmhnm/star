@@ -3,8 +3,10 @@ import { defaultStellariumAssets, type StellariumAssetManifest } from './stellar
 
 export interface SkyEngine {
   enforceViewBounds(): void
+  getConstellationLayers(): SkyConstellationLayers
   getView(): SkyViewState
   resetView(): void
+  setConstellationLayers(layers: SkyConstellationLayers): void
   setFovDeg(fovDeg: number): void
   syncCurrentTime(observedAt?: Date): void
   startRealtimeSync(): void
@@ -13,6 +15,11 @@ export interface SkyEngine {
 
 export interface SkyViewState {
   fovDeg: number
+}
+
+export interface SkyConstellationLayers {
+  labelsVisible: boolean
+  linesVisible: boolean
 }
 
 export interface CreateStellariumSkyEngineOptions {
@@ -144,6 +151,18 @@ class StellariumAdapter implements SkyEngine {
     }
   }
 
+  getConstellationLayers(): SkyConstellationLayers {
+    return {
+      labelsVisible: this.engine.core.constellations.labels_visible,
+      linesVisible: this.engine.core.constellations.lines_visible,
+    }
+  }
+
+  setConstellationLayers(layers: SkyConstellationLayers): void {
+    this.engine.core.constellations.lines_visible = layers.linesVisible
+    this.engine.core.constellations.labels_visible = layers.labelsVisible
+  }
+
   setFovDeg(fovDeg: number): void {
     const clampedFovDeg = clamp(fovDeg, skyFovBounds.minimumDeg, skyFovBounds.maximumDeg)
     this.engine.zoomTo(clampedFovDeg * this.engine.D2R, 0)
@@ -183,8 +202,7 @@ class StellariumAdapter implements SkyEngine {
     this.engine.core.time_speed = 0
     this.resetView()
     this.engine.core.atmosphere.visible = true
-    this.engine.core.constellations.lines_visible = true
-    this.engine.core.constellations.labels_visible = true
+    this.setConstellationLayers({ labelsVisible: true, linesVisible: true })
   }
 
   private stopRealtimeSync(): void {
