@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import L, { type LatLng, type LayerGroup, type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-import { createLightingCells, type MapLightingBand } from '../map-lighting/mapLighting'
+import {
+  createLightingCells,
+  getDarknessCenter,
+  type MapLightingBand,
+} from '../map-lighting/mapLighting'
 import type { PresenceCell } from '../presence/presenceClient'
 import {
   clampLatitude,
@@ -24,10 +28,6 @@ interface StaticWorldMapProps {
   selectedPopup?: ReactNode
 }
 
-const initialCenter: GeoCoordinate = {
-  latitudeDeg: 12,
-  longitudeDeg: 180,
-}
 const worldBounds = L.latLngBounds([
   [-85, 0],
   [85, 360],
@@ -134,7 +134,8 @@ export function StaticWorldMap({
   const lightingLayerRef = useRef<LayerGroup | null>(null)
   const markerLayerRef = useRef<LayerGroup | null>(null)
   const presenceLayerRef = useRef<LayerGroup | null>(null)
-  const snapshotAtRef = useRef(new Date())
+  const [snapshotAt] = useState(() => new Date())
+  const [initialCenter] = useState(() => getDarknessCenter(snapshotAt))
   const onCoordinateSelectRef = useRef(onCoordinateSelect)
   const selectedCoordinateRef = useRef(selectedCoordinate)
   const [selectedPopupPosition, setSelectedPopupPosition] = useState<{
@@ -220,7 +221,7 @@ export function StaticWorldMap({
       markerLayerRef.current = null
       presenceLayerRef.current = null
     }
-  }, [])
+  }, [initialCenter.latitudeDeg, initialCenter.longitudeDeg])
 
   useEffect(() => {
     if (!focusRequest) {
@@ -255,7 +256,7 @@ export function StaticWorldMap({
       return
     }
 
-    createLightingCells(snapshotAtRef.current, nightAltitudeThresholdDeg).forEach((cell) => {
+    createLightingCells(snapshotAt, nightAltitudeThresholdDeg).forEach((cell) => {
       const actualWest = cell.x - 180
       const west = toDisplayLongitude(actualWest)
       const east = west + cell.width
@@ -274,7 +275,7 @@ export function StaticWorldMap({
         },
       ).addTo(layer)
     })
-  }, [nightAltitudeThresholdDeg])
+  }, [nightAltitudeThresholdDeg, snapshotAt])
 
   useEffect(() => {
     const layer = markerLayerRef.current
@@ -369,7 +370,7 @@ export function StaticWorldMap({
     )
     constrainMapToWorldBounds(map)
     setViewState(getViewState(map))
-  }, [])
+  }, [initialCenter])
   return (
     <div className={styles.mapShell}>
       <div ref={containerRef} aria-label="세계지도 영역" className={styles.map} />

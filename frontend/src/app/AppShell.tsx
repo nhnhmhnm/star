@@ -15,6 +15,7 @@ export function AppShell({ activePath, canOpenSky, children }: AppShellProps) {
     <div className={styles.shell}>
       <header className={styles.header}>
         <p className={styles.brand}>Real Time Sky</p>
+        <div className={styles.headerTools} id="app-header-tools" />
         <nav className={styles.nav} aria-label="주요 화면">
           <a
             className={styles.navLink}

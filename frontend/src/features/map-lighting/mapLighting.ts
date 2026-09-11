@@ -1,4 +1,7 @@
-import { calculateSolarAltitudeDeg } from '../night-eligibility/nightEligibility'
+import {
+  calculateSolarAltitudeDeg,
+  type GeographicCoordinates,
+} from '../night-eligibility/nightEligibility'
 
 export type MapLightingBand =
   'day' | 'civil-twilight' | 'nautical-twilight' | 'astronomical-twilight' | 'night'
@@ -12,8 +15,8 @@ export interface LightingCell {
   band: MapLightingBand
 }
 
-const longitudeStepDeg = 2
-const latitudeStepDeg = 2
+const longitudeStepDeg = 1
+const latitudeStepDeg = 1
 
 export function getMapLightingBand(
   solarAltitudeDeg: number,
@@ -65,4 +68,22 @@ export function createLightingCells(
   }
 
   return cells
+}
+
+export function getDarknessCenter(observedAt: Date): GeographicCoordinates {
+  let darkestCoordinate: GeographicCoordinates = { latitudeDeg: 0, longitudeDeg: 180 }
+  let lowestSolarAltitudeDeg = Number.POSITIVE_INFINITY
+
+  for (let latitudeDeg = -88; latitudeDeg <= 88; latitudeDeg += 2) {
+    for (let longitudeDeg = -180; longitudeDeg < 180; longitudeDeg += 2) {
+      const solarAltitudeDeg = calculateSolarAltitudeDeg({ latitudeDeg, longitudeDeg }, observedAt)
+
+      if (solarAltitudeDeg < lowestSolarAltitudeDeg) {
+        lowestSolarAltitudeDeg = solarAltitudeDeg
+        darkestCoordinate = { latitudeDeg, longitudeDeg }
+      }
+    }
+  }
+
+  return darkestCoordinate
 }

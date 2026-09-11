@@ -19,13 +19,13 @@ describe('mapLighting', () => {
   it('creates a higher-resolution full equirectangular grid without external APIs', () => {
     const cells = createLightingCells(new Date('2026-03-20T00:00:00.000Z'), -18)
 
-    expect(cells).toHaveLength(16200)
+    expect(cells).toHaveLength(64800)
     expect(cells[0]).toEqual(
       expect.objectContaining({
         x: 0,
         y: 0,
-        width: 2,
-        height: 2,
+        width: 1,
+        height: 1,
       }),
     )
   })

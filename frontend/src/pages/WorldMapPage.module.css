@@ -12,52 +12,77 @@
 }
 
 .topBanner {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  left: 16px;
-  z-index: 700;
   display: grid;
-  grid-template-columns: auto auto minmax(280px, 440px);
-  align-items: start;
-  gap: 10px;
-  pointer-events: none;
+  grid-template-columns: minmax(56px, 1fr) minmax(320px, 520px) minmax(110px, 1fr);
+  align-items: center;
+  gap: 12px;
 }
 
-.topBanner > * {
-  pointer-events: auto;
+.searchSlot {
+  justify-self: center;
+  width: min(100%, 520px);
 }
 
-.languageGroup {
-  display: flex;
-  gap: 6px;
+.languageMenu {
+  position: relative;
+  justify-self: end;
+}
+
+.languageMenu summary {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
   border: 1px solid rgb(245 241 232 / 16%);
   border-radius: 999px;
-  padding: 4px;
-  background: rgb(5 10 18 / 78%);
-  backdrop-filter: blur(14px);
+  padding: 0 14px;
+  background: rgb(245 241 232 / 8%);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  list-style: none;
 }
 
-.languageButton,
-.activeLanguageButton {
-  border: 0;
-  border-radius: 999px;
-  padding: 8px 12px;
+.languageMenu summary::-webkit-details-marker {
+  display: none;
+}
+
+.languageMenu summary::after {
+  content: '▾';
+  margin-left: 8px;
   color: var(--color-muted);
-  background: transparent;
+}
+
+.languageOptions {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  min-width: 140px;
+  gap: 6px;
+  border: 1px solid rgb(245 241 232 / 16%);
+  border-radius: 12px;
+  padding: 8px;
+  background: rgb(5 10 18 / 94%);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 38%);
+}
+
+.languageOptions button {
+  border: 1px solid rgb(245 241 232 / 14%);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: rgb(255 255 255 / 5%);
+  color: var(--color-text);
   font: inherit;
   font-size: 13px;
   font-weight: 800;
+  text-align: left;
   cursor: pointer;
-}
-
-.activeLanguageButton {
-  color: #06111a;
-  background: #f5c86a;
 }
 
 .tip {
   position: relative;
+  justify-self: start;
 }
 
 .tipButton {
@@ -67,11 +92,10 @@
   border: 1px solid rgb(245 241 232 / 16%);
   border-radius: 999px;
   padding: 0 14px;
-  background: rgb(5 10 18 / 78%);
+  background: rgb(245 241 232 / 8%);
   color: var(--color-text);
   font-size: 13px;
   font-weight: 900;
-  backdrop-filter: blur(14px);
 }
 
 .tipPanel {
@@ -82,7 +106,7 @@
   border: 1px solid rgb(245 241 232 / 16%);
   border-radius: 12px;
   padding: 14px;
-  background: rgb(5 10 18 / 90%);
+  background: rgb(5 10 18 / 94%);
   color: var(--color-muted);
   box-shadow: 0 18px 60px rgb(0 0 0 / 38%);
   opacity: 0;
@@ -168,7 +192,8 @@
 
 .popupAvailable,
 .popupBlocked,
-.popupError {
+.popupError,
+.popupEstimate {
   margin: 12px 0 0;
   font-size: 14px;
   font-weight: 800;
@@ -181,6 +206,10 @@
 .popupBlocked,
 .popupError {
   color: #ffb4a8;
+}
+
+.popupEstimate {
+  color: var(--color-muted);
 }
 
 .enterButton {
@@ -208,26 +237,16 @@
   }
 
   .topBanner {
-    grid-template-columns: auto 1fr;
-  }
-
-  .topBanner form {
-    grid-column: 1 / -1;
+    grid-template-columns: auto 1fr auto;
   }
 }
 
 @media (max-width: 560px) {
   .topBanner {
-    top: 12px;
-    right: 12px;
-    left: 12px;
+    grid-template-columns: auto auto;
   }
 
-  .languageGroup {
-    justify-self: start;
-  }
-
-  .tip {
-    justify-self: end;
+  .searchSlot {
+    display: none;
   }
 }

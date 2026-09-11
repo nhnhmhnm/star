@@ -19,12 +19,19 @@
 }
 
 .brand {
+  flex: 0 0 auto;
   margin: 0;
   font-size: 20px;
   font-weight: 800;
 }
 
+.headerTools {
+  min-width: 0;
+  flex: 1;
+}
+
 .nav {
+  flex: 0 0 auto;
   display: flex;
   gap: 8px;
 }
