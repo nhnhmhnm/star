@@ -7,7 +7,7 @@
 ## Current State
 
 - 닉네임 기반 임시 방문 세션
-- 정적 세계지도, 검색 결과 이동, 클릭 좌표 선택
+- Leaflet/OpenStreetMap 기반 세계지도, 검색 결과 이동, 클릭 좌표 선택
 - 현재 태양 고도 기반 밤/낮 지도 음영과 밤하늘 진입 차단
 - WebSocket 기반 관측자 presence와 근사 위치 핀
 - 선택 좌표의 현재 밤하늘 Stellarium 렌더링
@@ -17,6 +17,7 @@
 
 - Frontend: TypeScript, React, Vite
 - Backend: Python, FastAPI, Pydantic
+- Map: Leaflet, OpenStreetMap raster tiles
 - Realtime: WebSocket, in-memory TTL store
 - Sky renderer: Stellarium Web Engine JS/WASM
 
@@ -41,6 +42,8 @@ npm run dev
 ```
 
 브라우저에서 `http://localhost:5173`을 엽니다. Vite 개발 서버는 `/config`, `/sessions`, `/presence` 요청을 `http://127.0.0.1:8000`으로 전달합니다.
+
+세계지도 배경은 OpenStreetMap 타일을 사용합니다. 로컬 실행 중 인터넷 연결이 없으면 지도 타일 배경은 보이지 않을 수 있지만, 앱의 좌표 선택 UI와 서버 기능은 그대로 실행됩니다.
 
 ## Stellarium Assets
 

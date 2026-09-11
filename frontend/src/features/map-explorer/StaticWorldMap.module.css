@@ -11,55 +11,13 @@
   width: 100%;
   height: 100%;
   min-height: inherit;
-  display: block;
-  touch-action: none;
-  cursor: grab;
-}
-
-.map:active {
-  cursor: grabbing;
-}
-
-.ocean {
-  fill: #162c40;
-}
-
-.graticule {
-  stroke: rgb(245 241 232 / 14%);
-  stroke-width: 0.45;
-}
-
-.land {
-  fill: #355f52;
-  stroke: rgb(245 241 232 / 28%);
-  stroke-width: 0.8;
-}
-
-.labels {
-  fill: rgb(245 241 232 / 64%);
-  font-size: 7px;
-  letter-spacing: 0.2px;
-  pointer-events: none;
-}
-
-.selectedMarker {
-  fill: #f5c86a;
-  stroke: rgb(5 10 18 / 86%);
-  stroke-width: 1.1;
-  pointer-events: none;
-}
-
-.selectedMarker circle:last-child {
-  fill: transparent;
-  stroke: #f5c86a;
-  stroke-width: 1;
-  opacity: 0.58;
 }
 
 .controls {
   position: absolute;
   top: 16px;
   left: 16px;
+  z-index: 500;
   display: flex;
   gap: 8px;
 }
@@ -81,12 +39,43 @@
   position: absolute;
   left: 16px;
   bottom: 16px;
+  z-index: 500;
   margin: 0;
   border-radius: 999px;
   padding: 8px 12px;
   background: rgb(5 10 18 / 74%);
   color: var(--color-muted);
   font-size: 14px;
+}
+
+.selectedMarker,
+.presencePin {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+}
+
+.selectedMarker span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #f5c86a;
+  border-radius: 999px;
+  background: rgb(245 200 106 / 32%);
+  box-shadow: 0 0 0 4px rgb(245 200 106 / 18%);
+}
+
+.presencePin {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgb(5 10 18 / 90%);
+  border-radius: 999px;
+  background: #7ee7ff;
+  color: #05101a;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 @media (max-width: 700px) {

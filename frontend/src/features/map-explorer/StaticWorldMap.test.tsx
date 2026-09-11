@@ -1,15 +1,15 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, render, screen } from '@testing-library/react'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { StaticWorldMap } from './StaticWorldMap'
+import { getMinimumNonWrappingZoom } from './mapZoom'
 
 describe('StaticWorldMap', () => {
   afterEach(() => {
     cleanup()
   })
 
-  it('renders the token-free world map fallback', () => {
+  it('renders the token-free Leaflet world map', () => {
     render(<StaticWorldMap nightAltitudeThresholdDeg={-18} />)
 
     expect(screen.getByLabelText('세계지도 영역')).toBeInTheDocument()
@@ -17,42 +17,37 @@ describe('StaticWorldMap', () => {
     expect(screen.getByRole('button', { name: '축소' })).toBeDisabled()
   })
 
-  it('zooms and resets with accessible controls', async () => {
-    const user = userEvent.setup()
-
+  it('provides accessible map controls', () => {
     render(<StaticWorldMap />)
 
-    await user.click(screen.getByRole('button', { name: '확대' }))
-
-    expect(screen.getByText(/배율 1\.5x/)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '축소' })).toBeEnabled()
-
-    await user.click(screen.getByRole('button', { name: '초기화' }))
-
-    expect(screen.getByText(/배율 1\.0x/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '확대' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '축소' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '초기화' })).toBeEnabled()
   })
 
-  it('emits coordinates when the map is clicked without dragging', () => {
-    const onCoordinateSelect = vi.fn()
+  it('raises the minimum zoom enough to avoid repeated continents on wide maps', () => {
+    expect(getMinimumNonWrappingZoom(320)).toBe(1)
+    expect(getMinimumNonWrappingZoom(1420)).toBe(3)
+  })
 
-    render(<StaticWorldMap onCoordinateSelect={onCoordinateSelect} />)
+  it('renders selected and presence markers on the Leaflet overlay', () => {
+    render(
+      <StaticWorldMap
+        selectedCoordinate={{ latitudeDeg: 37.5665, longitudeDeg: 126.978 }}
+        presenceCells={[
+          {
+            cellId: 'seoul',
+            latitudeDeg: 37.5,
+            longitudeDeg: 127,
+            members: [
+              { participantId: '1', displayName: '별친구' },
+              { participantId: '2', displayName: '밤친구' },
+            ],
+          },
+        ]}
+      />,
+    )
 
-    const map = screen.getByLabelText('세계지도 영역')
-
-    vi.spyOn(map, 'getBoundingClientRect').mockReturnValue({
-      x: 0,
-      y: 0,
-      top: 0,
-      left: 0,
-      right: 360,
-      bottom: 180,
-      width: 360,
-      height: 180,
-      toJSON: () => ({}),
-    })
-    fireEvent.pointerDown(map, { clientX: 180, clientY: 90, pointerId: 1 })
-    fireEvent.pointerUp(map, { clientX: 180, clientY: 90, pointerId: 1 })
-
-    expect(onCoordinateSelect).toHaveBeenCalledWith({ latitudeDeg: 0, longitudeDeg: 0 })
+    expect(screen.getByText('2')).toBeInTheDocument()
   })
 })

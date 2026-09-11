@@ -1,11 +1,19 @@
-import { geoCoordinateToMapPoint, type GeoCoordinate } from './mapProjection'
-import { MapLightingOverlay } from '../map-lighting/MapLightingOverlay'
-import { PresencePins } from '../presence/PresencePins'
-import type { PresenceCell } from '../presence/presenceClient'
-import styles from './StaticWorldMap.module.css'
-import { useStaticWorldMap, type MapFocusRequest } from './useStaticWorldMap'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import L, { type LayerGroup, type Map as LeafletMap } from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
-const graticuleValues = [-120, -60, 0, 60, 120]
+import { createLightingCells, type MapLightingBand } from '../map-lighting/mapLighting'
+import type { PresenceCell } from '../presence/presenceClient'
+import {
+  clampLatitude,
+  maxMapZoom,
+  minMapZoom,
+  normalizeLongitude,
+  type GeoCoordinate,
+} from './mapProjection'
+import { getMinimumNonWrappingZoom } from './mapZoom'
+import styles from './StaticWorldMap.module.css'
+import type { MapFocusRequest } from './useStaticWorldMap'
 
 interface StaticWorldMapProps {
   focusRequest?: MapFocusRequest | null
@@ -15,6 +23,46 @@ interface StaticWorldMapProps {
   selectedCoordinate?: GeoCoordinate | null
 }
 
+const initialCenter: GeoCoordinate = {
+  latitudeDeg: 12,
+  longitudeDeg: 0,
+}
+const worldBounds = L.latLngBounds([
+  [-85, -180],
+  [85, 180],
+])
+
+const lightingBandStyles: Record<MapLightingBand, L.PathOptions> = {
+  day: { fillColor: '#ffdd8e', fillOpacity: 0.22 },
+  'civil-twilight': { fillColor: '#8797c4', fillOpacity: 0.22 },
+  'nautical-twilight': { fillColor: '#314a7a', fillOpacity: 0.26 },
+  'astronomical-twilight': { fillColor: '#15244e', fillOpacity: 0.3 },
+  night: { fillColor: '#040c22', fillOpacity: 0.42 },
+}
+
+function getViewState(map: LeafletMap) {
+  const center = map.getCenter()
+
+  return {
+    center: {
+      latitudeDeg: clampLatitude(center.lat),
+      longitudeDeg: normalizeLongitude(center.lng),
+    },
+    minZoom: map.getMinZoom(),
+    zoom: map.getZoom(),
+  }
+}
+
+function applyMinimumNonWrappingZoom(map: LeafletMap, container: HTMLDivElement): void {
+  const minimumZoom = getMinimumNonWrappingZoom(container.clientWidth)
+
+  map.setMinZoom(minimumZoom)
+
+  if (map.getZoom() < minimumZoom) {
+    map.setZoom(minimumZoom, { animate: false })
+  }
+}
+
 export function StaticWorldMap({
   focusRequest = null,
   nightAltitudeThresholdDeg = null,
@@ -22,89 +70,235 @@ export function StaticWorldMap({
   presenceCells = [],
   selectedCoordinate = null,
 }: StaticWorldMapProps) {
-  const map = useStaticWorldMap(focusRequest?.center, focusRequest?.zoom, { onCoordinateSelect })
-  const selectedPoint = selectedCoordinate ? geoCoordinateToMapPoint(selectedCoordinate) : null
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const mapRef = useRef<LeafletMap | null>(null)
+  const lightingLayerRef = useRef<LayerGroup | null>(null)
+  const markerLayerRef = useRef<LayerGroup | null>(null)
+  const presenceLayerRef = useRef<LayerGroup | null>(null)
+  const snapshotAtRef = useRef(new Date())
+  const onCoordinateSelectRef = useRef(onCoordinateSelect)
+  const [viewState, setViewState] = useState({
+    center: initialCenter,
+    minZoom: minMapZoom,
+    zoom: minMapZoom,
+  })
+
+  useEffect(() => {
+    onCoordinateSelectRef.current = onCoordinateSelect
+  }, [onCoordinateSelect])
+
+  useEffect(() => {
+    const container = containerRef.current
+
+    if (!container || mapRef.current) {
+      return undefined
+    }
+
+    const map = L.map(container, {
+      attributionControl: true,
+      maxBounds: worldBounds,
+      maxBoundsViscosity: 1,
+      maxZoom: maxMapZoom,
+      minZoom: getMinimumNonWrappingZoom(container.clientWidth),
+      worldCopyJump: false,
+      zoomControl: false,
+    })
+    applyMinimumNonWrappingZoom(map, container)
+    map.setView([initialCenter.latitudeDeg, initialCenter.longitudeDeg], map.getMinZoom())
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      bounds: worldBounds,
+      maxZoom: maxMapZoom,
+      minZoom: map.getMinZoom(),
+      noWrap: true,
+    }).addTo(map)
+
+    lightingLayerRef.current = L.layerGroup().addTo(map)
+    markerLayerRef.current = L.layerGroup().addTo(map)
+    presenceLayerRef.current = L.layerGroup().addTo(map)
+
+    const updateViewState = () => setViewState(getViewState(map))
+    const updateMinimumZoom = () => {
+      applyMinimumNonWrappingZoom(map, container)
+      updateViewState()
+    }
+
+    map.on('moveend zoomend', updateViewState)
+    map.on('click', (event) => {
+      onCoordinateSelectRef.current?.({
+        latitudeDeg: clampLatitude(event.latlng.lat),
+        longitudeDeg: normalizeLongitude(event.latlng.lng),
+      })
+    })
+
+    mapRef.current = map
+    updateViewState()
+    window.addEventListener('resize', updateMinimumZoom)
+
+    return () => {
+      window.removeEventListener('resize', updateMinimumZoom)
+      map.remove()
+      mapRef.current = null
+      lightingLayerRef.current = null
+      markerLayerRef.current = null
+      presenceLayerRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!focusRequest) {
+      return
+    }
+
+    const map = mapRef.current
+
+    if (!map) {
+      return
+    }
+
+    map.setView(
+      [focusRequest.center.latitudeDeg, focusRequest.center.longitudeDeg],
+      Math.max(focusRequest.zoom, map.getMinZoom()),
+    )
+    setViewState(getViewState(map))
+  }, [focusRequest])
+
+  useEffect(() => {
+    const layer = lightingLayerRef.current
+
+    if (!layer) {
+      return
+    }
+
+    layer.clearLayers()
+
+    if (nightAltitudeThresholdDeg === null) {
+      return
+    }
+
+    createLightingCells(snapshotAtRef.current, nightAltitudeThresholdDeg).forEach((cell) => {
+      const west = cell.x - 180
+      const east = west + cell.width
+      const north = 90 - cell.y
+      const south = north - cell.height
+
+      L.rectangle(
+        [
+          [south, west],
+          [north, east],
+        ],
+        {
+          ...lightingBandStyles[cell.band],
+          interactive: false,
+          stroke: false,
+        },
+      ).addTo(layer)
+    })
+  }, [nightAltitudeThresholdDeg])
+
+  useEffect(() => {
+    const layer = markerLayerRef.current
+
+    if (!layer) {
+      return
+    }
+
+    layer.clearLayers()
+
+    if (!selectedCoordinate) {
+      return
+    }
+
+    L.marker([selectedCoordinate.latitudeDeg, selectedCoordinate.longitudeDeg], {
+      icon: L.divIcon({
+        className: styles.selectedMarker,
+        html: '<span></span>',
+      }),
+      interactive: false,
+    }).addTo(layer)
+  }, [selectedCoordinate])
+
+  useEffect(() => {
+    const layer = presenceLayerRef.current
+
+    if (!layer) {
+      return
+    }
+
+    layer.clearLayers()
+
+    presenceCells.forEach((cell) => {
+      L.marker([cell.latitudeDeg, cell.longitudeDeg], {
+        icon: L.divIcon({
+          className: styles.presencePin,
+          html: cell.members.length > 1 ? String(cell.members.length) : '',
+        }),
+        interactive: false,
+      }).addTo(layer)
+    })
+  }, [presenceCells])
+
+  const zoomIn = useCallback(() => {
+    const map = mapRef.current
+
+    if (!map) {
+      return
+    }
+
+    setViewState((current) => {
+      const nextZoom = Math.min(current.zoom + 1, maxMapZoom)
+
+      map.setZoom(nextZoom, { animate: false })
+
+      return { ...getViewState(map), zoom: nextZoom }
+    })
+  }, [])
+  const zoomOut = useCallback(() => {
+    const map = mapRef.current
+
+    if (!map) {
+      return
+    }
+
+    setViewState((current) => {
+      const nextZoom = Math.max(current.zoom - 1, current.minZoom)
+
+      map.setZoom(nextZoom, { animate: false })
+
+      return { ...getViewState(map), zoom: nextZoom }
+    })
+  }, [])
+  const reset = useCallback(() => {
+    const map = mapRef.current
+
+    if (!map) {
+      return
+    }
+
+    map.setView([initialCenter.latitudeDeg, initialCenter.longitudeDeg], map.getMinZoom(), {
+      animate: false,
+    })
+    setViewState(getViewState(map))
+  }, [])
 
   return (
     <div className={styles.mapShell}>
-      <svg
-        aria-label="세계지도 영역"
-        className={styles.map}
-        role="img"
-        viewBox={`${map.viewBox.x} ${map.viewBox.y} ${map.viewBox.width} ${map.viewBox.height}`}
-        onPointerDown={map.startDrag}
-        onPointerMove={map.drag}
-        onPointerUp={map.endDrag}
-        onPointerCancel={map.cancelDrag}
-        onWheel={map.zoomWithWheel}
-      >
-        <rect className={styles.ocean} x="0" y="0" width="360" height="180" />
-        <g className={styles.graticule}>
-          {graticuleValues.map((longitude) => (
-            <line
-              key={`lng-${longitude}`}
-              x1={longitude + 180}
-              y1="0"
-              x2={longitude + 180}
-              y2="180"
-            />
-          ))}
-          {[-60, -30, 0, 30, 60].map((latitude) => (
-            <line key={`lat-${latitude}`} x1="0" y1={90 - latitude} x2="360" y2={90 - latitude} />
-          ))}
-        </g>
-        <g className={styles.land}>
-          <polygon points="28,45 52,26 96,30 118,48 106,72 75,80 42,70" />
-          <polygon points="88,78 112,88 118,124 100,160 82,132 72,96" />
-          <polygon points="140,43 178,31 214,41 224,69 197,82 158,73" />
-          <polygon points="188,76 226,70 265,92 254,128 214,120" />
-          <polygon points="246,52 298,58 318,84 286,104 248,86" />
-          <polygon points="274,124 318,132 330,152 294,158" />
-          <polygon points="122,150 220,148 275,160 240,172 142,170" />
-        </g>
-        <MapLightingOverlay nightAltitudeThresholdDeg={nightAltitudeThresholdDeg} />
-        <PresencePins cells={presenceCells} />
-        <g className={styles.labels} aria-hidden="true">
-          <text x="70" y="56">
-            North America
-          </text>
-          <text x="92" y="117">
-            South America
-          </text>
-          <text x="178" y="60">
-            Europe
-          </text>
-          <text x="210" y="99">
-            Africa
-          </text>
-          <text x="276" y="75">
-            Asia
-          </text>
-          <text x="303" y="145">
-            Australia
-          </text>
-        </g>
-        {selectedPoint ? (
-          <g className={styles.selectedMarker} aria-hidden="true">
-            <circle cx={selectedPoint.x} cy={selectedPoint.y} r="3.5" />
-            <circle cx={selectedPoint.x} cy={selectedPoint.y} r="7" />
-          </g>
-        ) : null}
-      </svg>
+      <div ref={containerRef} aria-label="세계지도 영역" className={styles.map} />
       <div className={styles.controls} aria-label="지도 조작">
-        <button type="button" onClick={map.zoomIn} disabled={!map.canZoomIn}>
+        <button type="button" onClick={zoomIn} disabled={viewState.zoom >= maxMapZoom}>
           확대
         </button>
-        <button type="button" onClick={map.zoomOut} disabled={!map.canZoomOut}>
+        <button type="button" onClick={zoomOut} disabled={viewState.zoom <= viewState.minZoom}>
           축소
         </button>
-        <button type="button" onClick={map.reset}>
+        <button type="button" onClick={reset}>
           초기화
         </button>
       </div>
       <p className={styles.status} aria-live="polite">
-        지도 중심 위도 {map.center.latitudeDeg.toFixed(2)}°, 경도{' '}
-        {map.center.longitudeDeg.toFixed(2)}° · 배율 {map.zoom.toFixed(1)}x
+        지도 중심 위도 {viewState.center.latitudeDeg.toFixed(2)}°, 경도{' '}
+        {viewState.center.longitudeDeg.toFixed(2)}° · 확대 {viewState.zoom.toFixed(1)}
       </p>
     </div>
   )

@@ -30,7 +30,7 @@ export interface MapViewBox {
 export const worldMapWidth = 360
 export const worldMapHeight = 180
 export const minMapZoom = 1
-export const maxMapZoom = 8
+export const maxMapZoom = 12
 
 export function clampLatitude(latitudeDeg: number): number {
   return clamp(latitudeDeg, -85, 85)
