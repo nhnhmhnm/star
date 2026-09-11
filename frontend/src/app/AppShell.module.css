@@ -24,12 +24,6 @@
   font-weight: 800;
 }
 
-.sessionName {
-  margin: 2px 0 0;
-  color: var(--color-muted);
-  font-size: 14px;
-}
-
 .nav {
   display: flex;
   gap: 8px;

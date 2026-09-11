@@ -16,16 +16,16 @@ describe('mapLighting', () => {
     expect(getMapLightingBand(-15, -18)).toBe('astronomical-twilight')
   })
 
-  it('creates a full equirectangular grid without external APIs', () => {
+  it('creates a higher-resolution full equirectangular grid without external APIs', () => {
     const cells = createLightingCells(new Date('2026-03-20T00:00:00.000Z'), -18)
 
-    expect(cells).toHaveLength(648)
+    expect(cells).toHaveLength(16200)
     expect(cells[0]).toEqual(
       expect.objectContaining({
         x: 0,
         y: 0,
-        width: 10,
-        height: 10,
+        width: 2,
+        height: 2,
       }),
     )
   })

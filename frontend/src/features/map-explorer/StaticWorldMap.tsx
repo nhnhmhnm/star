@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import L, { type LayerGroup, type Map as LeafletMap } from 'leaflet'
+import L, { type LatLng, type LayerGroup, type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 import { createLightingCells, type MapLightingBand } from '../map-lighting/mapLighting'
@@ -53,14 +53,61 @@ function getViewState(map: LeafletMap) {
   }
 }
 
+function constrainMapToWorldBounds(map: LeafletMap): void {
+  const center = map.getCenter()
+  const nextCenter = getViewportContainedCenter(map)
+
+  if (
+    Math.abs(center.lat - nextCenter.lat) < 0.000001 &&
+    Math.abs(center.lng - nextCenter.lng) < 0.000001
+  ) {
+    return
+  }
+
+  map.setView(nextCenter, map.getZoom(), { animate: false })
+}
+
+function getViewportContainedCenter(map: LeafletMap): LatLng {
+  const zoom = map.getZoom()
+  const size = map.getSize()
+  const northWest = map.project(worldBounds.getNorthWest(), zoom)
+  const southEast = map.project(worldBounds.getSouthEast(), zoom)
+  const center = map.project(map.getCenter(), zoom)
+  const halfWidth = size.x / 2
+  const halfHeight = size.y / 2
+
+  const minX = northWest.x + halfWidth
+  const maxX = southEast.x - halfWidth
+  const minY = northWest.y + halfHeight
+  const maxY = southEast.y - halfHeight
+
+  return map.unproject(
+    L.point({
+      x: minX > maxX ? (northWest.x + southEast.x) / 2 : clamp(center.x, minX, maxX),
+      y: minY > maxY ? (northWest.y + southEast.y) / 2 : clamp(center.y, minY, maxY),
+    }),
+    zoom,
+  )
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(Math.max(value, minimum), maximum)
+}
+
 function applyMinimumNonWrappingZoom(map: LeafletMap, container: HTMLDivElement): void {
-  const minimumZoom = getMinimumNonWrappingZoom(container.clientWidth)
+  const minimumZoom = getMinimumNonWrappingZoom(container.clientWidth, container.clientHeight)
 
   map.setMinZoom(minimumZoom)
 
   if (map.getZoom() < minimumZoom) {
     map.setZoom(minimumZoom, { animate: false })
   }
+
+  constrainMapToWorldBounds(map)
+}
+
+function shouldPreferCanvasRenderer(): boolean {
+  return typeof navigator === 'undefined' || !navigator.userAgent.includes('jsdom')
 }
 
 export function StaticWorldMap({
@@ -99,12 +146,13 @@ export function StaticWorldMap({
       maxBounds: worldBounds,
       maxBoundsViscosity: 1,
       maxZoom: maxMapZoom,
-      minZoom: getMinimumNonWrappingZoom(container.clientWidth),
+      minZoom: getMinimumNonWrappingZoom(container.clientWidth, container.clientHeight),
+      preferCanvas: shouldPreferCanvasRenderer(),
       worldCopyJump: false,
       zoomControl: false,
     })
-    applyMinimumNonWrappingZoom(map, container)
     map.setView([initialCenter.latitudeDeg, initialCenter.longitudeDeg], map.getMinZoom())
+    applyMinimumNonWrappingZoom(map, container)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
@@ -118,7 +166,10 @@ export function StaticWorldMap({
     markerLayerRef.current = L.layerGroup().addTo(map)
     presenceLayerRef.current = L.layerGroup().addTo(map)
 
-    const updateViewState = () => setViewState(getViewState(map))
+    const updateViewState = () => {
+      constrainMapToWorldBounds(map)
+      setViewState(getViewState(map))
+    }
     const updateMinimumZoom = () => {
       applyMinimumNonWrappingZoom(map, container)
       updateViewState()
@@ -160,7 +211,9 @@ export function StaticWorldMap({
     map.setView(
       [focusRequest.center.latitudeDeg, focusRequest.center.longitudeDeg],
       Math.max(focusRequest.zoom, map.getMinZoom()),
+      { animate: false },
     )
+    constrainMapToWorldBounds(map)
     setViewState(getViewState(map))
   }, [focusRequest])
 
@@ -250,6 +303,7 @@ export function StaticWorldMap({
       const nextZoom = Math.min(current.zoom + 1, maxMapZoom)
 
       map.setZoom(nextZoom, { animate: false })
+      constrainMapToWorldBounds(map)
 
       return { ...getViewState(map), zoom: nextZoom }
     })
@@ -265,6 +319,7 @@ export function StaticWorldMap({
       const nextZoom = Math.max(current.zoom - 1, current.minZoom)
 
       map.setZoom(nextZoom, { animate: false })
+      constrainMapToWorldBounds(map)
 
       return { ...getViewState(map), zoom: nextZoom }
     })
@@ -279,6 +334,7 @@ export function StaticWorldMap({
     map.setView([initialCenter.latitudeDeg, initialCenter.longitudeDeg], map.getMinZoom(), {
       animate: false,
     })
+    constrainMapToWorldBounds(map)
     setViewState(getViewState(map))
   }, [])
 

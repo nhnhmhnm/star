@@ -46,14 +46,9 @@
   line-height: 1.15;
 }
 
-.description,
-.presence {
+.description {
   margin: 14px 0 0;
   color: var(--color-muted);
-}
-
-.presence {
-  font-weight: 700;
 }
 
 .controls {

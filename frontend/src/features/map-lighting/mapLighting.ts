@@ -12,8 +12,8 @@ export interface LightingCell {
   band: MapLightingBand
 }
 
-const longitudeStepDeg = 10
-const latitudeStepDeg = 10
+const longitudeStepDeg = 2
+const latitudeStepDeg = 2
 
 export function getMapLightingBand(
   solarAltitudeDeg: number,

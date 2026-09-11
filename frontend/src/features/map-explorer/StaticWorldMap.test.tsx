@@ -25,9 +25,10 @@ describe('StaticWorldMap', () => {
     expect(screen.getByRole('button', { name: '초기화' })).toBeEnabled()
   })
 
-  it('raises the minimum zoom enough to avoid repeated continents on wide maps', () => {
+  it('raises the minimum zoom enough to avoid repeated continents on wide or tall maps', () => {
     expect(getMinimumNonWrappingZoom(320)).toBe(1)
-    expect(getMinimumNonWrappingZoom(1420)).toBe(3)
+    expect(getMinimumNonWrappingZoom(1420, 740)).toBe(3)
+    expect(getMinimumNonWrappingZoom(640, 1200)).toBe(3)
   })
 
   it('renders selected and presence markers on the Leaflet overlay', () => {

@@ -1,32 +1,22 @@
 import { useRef } from 'react'
 
 import type { SelectedObservationLocation } from '../app/observation/observationState'
-import { useObservationPresence } from '../features/presence/useObservationPresence'
 import { useCurrentSkyEngine } from '../features/sky-engine/useCurrentSkyEngine'
 import { normalizeAzimuthDeg, skyFovBounds } from '../features/sky-engine/StellariumAdapter'
-import type { VisitorSession } from '../features/visitor-session/visitorSession'
 import type { PublicAppConfig } from '../shared/api/publicConfig'
 import styles from './SkyViewerPage.module.css'
 
 interface SkyViewerPageProps {
   config: PublicAppConfig
   selectedLocation: SelectedObservationLocation
-  visitorSession: VisitorSession
 }
 
-export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyViewerPageProps) {
+export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const sky = useCurrentSkyEngine({
     canvasRef,
     location: selectedLocation,
     nightAltitudeThresholdDeg: config.nightAltitudeThresholdDeg,
-  })
-  const presenceStatus = useObservationPresence({
-    cellSizeDeg: config.presenceCellSizeDeg,
-    enabled: sky.status === 'ready',
-    heartbeatSeconds: config.presenceHeartbeatSeconds,
-    location: selectedLocation,
-    session: visitorSession,
   })
   const canvasClassName =
     sky.status === 'ready' ? styles.canvas : `${styles.canvas} ${styles.canvasHidden}`
@@ -46,9 +36,6 @@ export function SkyViewerPage({ config, selectedLocation, visitorSession }: SkyV
         <p className={styles.description}>
           위도 {selectedLocation.latitudeDeg.toFixed(4)}°, 경도{' '}
           {selectedLocation.longitudeDeg.toFixed(4)}°
-        </p>
-        <p className={styles.presence} aria-live="polite">
-          관측 상태: {formatPresenceStatus(presenceStatus)}
         </p>
         {sky.status === 'ready' ? (
           <>
@@ -146,19 +133,6 @@ function formatCardinalDirection(azimuthDeg: number): string {
   }
 
   return '서'
-}
-
-function formatPresenceStatus(status: ReturnType<typeof useObservationPresence>): string {
-  switch (status) {
-    case 'connecting':
-      return '연결 중'
-    case 'connected':
-      return '공개 중'
-    case 'disconnected':
-      return '대기 중'
-    case 'unavailable':
-      return '연결 불가'
-  }
 }
 
 function formatSkyStatusTitle(status: ReturnType<typeof useCurrentSkyEngine>['status']): string {
