@@ -15,7 +15,7 @@
 
 .controls {
   position: absolute;
-  top: 16px;
+  bottom: 16px;
   left: 16px;
   z-index: 500;
   display: flex;
@@ -37,7 +37,7 @@
 
 .status {
   position: absolute;
-  left: 16px;
+  right: 16px;
   bottom: 16px;
   z-index: 500;
   margin: 0;
@@ -46,6 +46,12 @@
   background: rgb(5 10 18 / 74%);
   color: var(--color-muted);
   font-size: 14px;
+}
+
+.selectedPopup {
+  position: absolute;
+  z-index: 600;
+  transform: translate(18px, -50%);
 }
 
 .selectedMarker,
@@ -84,14 +90,18 @@
   }
 
   .controls {
-    top: 12px;
+    bottom: 12px;
     left: 12px;
     flex-wrap: wrap;
   }
 
   .status {
     right: 12px;
-    bottom: 12px;
+    bottom: 58px;
     left: 12px;
+  }
+
+  .selectedPopup {
+    transform: translate(-50%, calc(-100% - 18px));
   }
 }

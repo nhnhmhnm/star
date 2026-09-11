@@ -12,6 +12,13 @@ describe('localPlaceSearchProvider', () => {
     ])
   })
 
+  it('finds places by English localized names', async () => {
+    await expect(localPlaceSearchProvider.search('south korea')).resolves.toEqual([
+      expect.objectContaining({ id: 'kr-seoul' }),
+      expect.objectContaining({ id: 'kr-busan' }),
+    ])
+  })
+
   it('requires at least two characters', async () => {
     await expect(localPlaceSearchProvider.search('s')).resolves.toEqual([])
   })

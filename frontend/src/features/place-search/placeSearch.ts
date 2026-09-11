@@ -4,9 +4,18 @@ export interface PlaceSearchResult {
   id: string
   name: string
   region: string
+  localizedName?: LocalizedPlaceText
+  localizedRegion?: LocalizedPlaceText
   coordinate: GeoCoordinate
   suggestedZoom: number
   keywords: string[]
+}
+
+export type PlaceDisplayLanguage = 'ko' | 'en'
+
+export interface LocalizedPlaceText {
+  ko: string
+  en: string
 }
 
 export interface PlaceSearchProvider {

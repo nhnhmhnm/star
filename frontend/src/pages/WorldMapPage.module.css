@@ -1,63 +1,233 @@
 .page {
-  min-height: calc(100svh - 73px);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 24px;
-  padding: 24px;
+  position: relative;
+  height: calc(100svh - 73px);
+  min-height: 620px;
+  overflow: hidden;
 }
 
 .mapStage {
-  min-height: 560px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  overflow: hidden;
+  position: absolute;
+  inset: 0;
   background: #0b1724;
 }
 
-.sidePanel {
-  align-self: start;
-  padding: 24px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: rgb(8 11 18 / 76%);
+.topBanner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  left: 16px;
+  z-index: 700;
+  display: grid;
+  grid-template-columns: auto auto minmax(280px, 440px);
+  align-items: start;
+  gap: 10px;
+  pointer-events: none;
 }
 
-.eyebrow {
-  margin: 0 0 10px;
-  color: var(--color-accent);
-  font-size: 14px;
-  font-weight: 700;
+.topBanner > * {
+  pointer-events: auto;
 }
 
-.title {
-  margin: 0;
-  font-size: 30px;
-  line-height: 1.15;
+.languageGroup {
+  display: flex;
+  gap: 6px;
+  border: 1px solid rgb(245 241 232 / 16%);
+  border-radius: 999px;
+  padding: 4px;
+  background: rgb(5 10 18 / 78%);
+  backdrop-filter: blur(14px);
 }
 
-.description,
-.status,
-.note {
-  margin: 14px 0 0;
+.languageButton,
+.activeLanguageButton {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 12px;
   color: var(--color-muted);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
 }
 
-.status {
-  font-weight: 700;
+.activeLanguageButton {
+  color: #06111a;
+  background: #f5c86a;
 }
 
-.note {
+.tip {
+  position: relative;
+}
+
+.tipButton {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid rgb(245 241 232 / 16%);
+  border-radius: 999px;
+  padding: 0 14px;
+  background: rgb(5 10 18 / 78%);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 900;
+  backdrop-filter: blur(14px);
+}
+
+.tipPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: min(340px, calc(100vw - 32px));
+  border: 1px solid rgb(245 241 232 / 16%);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgb(5 10 18 / 90%);
+  color: var(--color-muted);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 38%);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+  pointer-events: none;
+}
+
+.tip:hover .tipPanel,
+.tip:focus-within .tipPanel {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.tipPanel p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tipPanel p + p {
+  margin-top: 8px;
+}
+
+.coordinatePopup {
+  position: relative;
+  width: min(300px, calc(100vw - 32px));
+  border: 1px solid rgb(245 241 232 / 18%);
+  border-radius: 14px;
+  padding: 16px;
+  background: rgb(5 10 18 / 88%);
+  color: var(--color-text);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 42%);
+  backdrop-filter: blur(16px);
+}
+
+.coordinatePopup::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  width: 14px;
+  height: 14px;
+  border-bottom: 1px solid rgb(245 241 232 / 18%);
+  border-left: 1px solid rgb(245 241 232 / 18%);
+  background: inherit;
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.popupCloseButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 1px solid rgb(245 241 232 / 14%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 6%);
+  color: var(--color-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.popupEyebrow {
+  margin: 0 0 6px;
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.coordinatePopup h2 {
+  margin: 0;
+  padding-right: 28px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.popupAvailable,
+.popupBlocked,
+.popupError {
+  margin: 12px 0 0;
   font-size: 14px;
-  line-height: 1.6;
+  font-weight: 800;
 }
 
-.error {
-  margin: 10px 0 0;
+.popupAvailable {
+  color: #9df0c8;
+}
+
+.popupBlocked,
+.popupError {
   color: #ffb4a8;
+}
+
+.enterButton {
+  width: 100%;
+  margin: 14px 0 0;
+  border: 1px solid rgb(245 200 106 / 42%);
+  border-radius: 10px;
+  padding: 11px 12px;
+  background: rgb(245 200 106 / 18%);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.enterButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 @media (max-width: 900px) {
   .page {
-    grid-template-columns: 1fr;
+    height: calc(100svh - 112px);
+    min-height: 640px;
+  }
+
+  .topBanner {
+    grid-template-columns: auto 1fr;
+  }
+
+  .topBanner form {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .topBanner {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .languageGroup {
+    justify-self: start;
+  }
+
+  .tip {
+    justify-self: end;
   }
 }

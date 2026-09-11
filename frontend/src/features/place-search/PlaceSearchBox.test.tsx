@@ -22,4 +22,22 @@ describe('PlaceSearchBox', () => {
 
     expect(onResultSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'kr-seoul' }))
   })
+
+  it('shows place names in the selected language', async () => {
+    const user = userEvent.setup()
+
+    render(
+      <PlaceSearchBox
+        language="en"
+        provider={localPlaceSearchProvider}
+        onResultSelect={() => undefined}
+      />,
+    )
+
+    await user.type(screen.getByLabelText('장소 검색'), '서울')
+    await user.click(screen.getByRole('button', { name: '검색' }))
+
+    expect(await screen.findByRole('button', { name: /Seoul/ })).toBeInTheDocument()
+    expect(screen.getByText('South Korea')).toBeInTheDocument()
+  })
 })

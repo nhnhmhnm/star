@@ -1,17 +1,20 @@
 .searchBox {
-  margin: 20px 0 0;
-  padding: 16px;
+  position: relative;
+  margin: 0;
+  padding: 10px;
   border: 1px solid rgb(245 241 232 / 12%);
-  border-radius: 8px;
-  background: rgb(255 255 255 / 4%);
+  border-radius: 14px;
+  background: rgb(5 10 18 / 78%);
+  backdrop-filter: blur(14px);
 }
 
 .label {
-  display: block;
-  margin: 0 0 8px;
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 700;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .row {
@@ -50,7 +53,7 @@
 .help,
 .empty,
 .error {
-  margin: 10px 0 0;
+  margin: 8px 2px 0;
   color: var(--color-muted);
   font-size: 13px;
   line-height: 1.5;
@@ -61,10 +64,19 @@
 }
 
 .results {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  left: 0;
+  z-index: 10;
   display: grid;
   gap: 8px;
-  margin: 14px 0 0;
-  padding: 0;
+  margin: 0;
+  border: 1px solid rgb(245 241 232 / 14%);
+  border-radius: 12px;
+  padding: 8px;
+  background: rgb(5 10 18 / 90%);
+  box-shadow: 0 18px 60px rgb(0 0 0 / 36%);
   list-style: none;
 }
 

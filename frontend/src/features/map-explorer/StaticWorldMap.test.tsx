@@ -35,6 +35,7 @@ describe('StaticWorldMap', () => {
     render(
       <StaticWorldMap
         selectedCoordinate={{ latitudeDeg: 37.5665, longitudeDeg: 126.978 }}
+        selectedPopup={<p>선택한 위치</p>}
         presenceCells={[
           {
             cellId: 'seoul',
@@ -50,5 +51,6 @@ describe('StaticWorldMap', () => {
     )
 
     expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByText('선택한 위치')).toBeInTheDocument()
   })
 })

@@ -1,15 +1,16 @@
 import { useState, type FormEvent } from 'react'
 
 import styles from './PlaceSearchBox.module.css'
-import type { PlaceSearchProvider, PlaceSearchResult } from './placeSearch'
+import type { PlaceDisplayLanguage, PlaceSearchProvider, PlaceSearchResult } from './placeSearch'
 import { usePlaceSearch } from './usePlaceSearch'
 
 interface PlaceSearchBoxProps {
+  language?: PlaceDisplayLanguage
   provider: PlaceSearchProvider
   onResultSelect: (result: PlaceSearchResult) => void
 }
 
-export function PlaceSearchBox({ provider, onResultSelect }: PlaceSearchBoxProps) {
+export function PlaceSearchBox({ language = 'ko', provider, onResultSelect }: PlaceSearchBoxProps) {
   const [query, setQuery] = useState('')
   const search = usePlaceSearch(provider)
 
@@ -46,8 +47,8 @@ export function PlaceSearchBox({ provider, onResultSelect }: PlaceSearchBoxProps
           {search.results.map((result) => (
             <li key={result.id}>
               <button type="button" onClick={() => onResultSelect(result)}>
-                <span>{result.name}</span>
-                <small>{result.region}</small>
+                <span>{getLocalizedPlaceName(result, language)}</span>
+                <small>{getLocalizedPlaceRegion(result, language)}</small>
               </button>
             </li>
           ))}
@@ -55,4 +56,15 @@ export function PlaceSearchBox({ provider, onResultSelect }: PlaceSearchBoxProps
       ) : null}
     </form>
   )
+}
+
+function getLocalizedPlaceName(result: PlaceSearchResult, language: PlaceDisplayLanguage): string {
+  return result.localizedName?.[language] ?? result.name
+}
+
+function getLocalizedPlaceRegion(
+  result: PlaceSearchResult,
+  language: PlaceDisplayLanguage,
+): string {
+  return result.localizedRegion?.[language] ?? result.region
 }

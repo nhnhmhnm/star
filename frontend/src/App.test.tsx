@@ -37,9 +37,7 @@ describe('App', () => {
   it('opens the world map without requiring a nickname', async () => {
     render(<App />)
 
-    expect(
-      await screen.findByRole('heading', { name: '밤인 지역을 선택해 하늘을 봅니다' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByLabelText('세계지도')).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: '별을 볼 때 사용할 닉네임' }),
     ).not.toBeInTheDocument()
@@ -48,7 +46,7 @@ describe('App', () => {
   it('does not create a visitor session on entry', async () => {
     render(<App />)
 
-    await screen.findByRole('heading', { name: '밤인 지역을 선택해 하늘을 봅니다' })
+    await screen.findByLabelText('세계지도')
 
     expect(globalThis.fetch).not.toHaveBeenCalledWith(
       '/sessions/visitors',
@@ -56,7 +54,7 @@ describe('App', () => {
     )
   })
 
-  it('renders the backend night threshold when public config loads', async () => {
+  it('renders the backend night threshold in the map tip', async () => {
     render(<App />)
 
     expect(await screen.findByText('현재 기준: 태양 고도 -18° 이하')).toBeInTheDocument()
@@ -70,8 +68,6 @@ describe('App', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/')
     })
-    expect(
-      screen.getByRole('heading', { name: '밤인 지역을 선택해 하늘을 봅니다' }),
-    ).toBeInTheDocument()
+    expect(screen.getByLabelText('세계지도')).toBeInTheDocument()
   })
 })
