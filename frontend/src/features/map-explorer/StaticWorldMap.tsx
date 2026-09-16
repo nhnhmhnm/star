@@ -1,12 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import L, { type LatLng, type LayerGroup, type Map as LeafletMap } from 'leaflet'
+import L, { type LayerGroup, type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-import {
-  createLightingCells,
-  getDarknessCenter,
-  type MapLightingBand,
-} from '../map-lighting/mapLighting'
+import { createNightBoundary, getDarknessCenter } from '../map-lighting/mapLighting'
 import type { PresenceCell } from '../presence/presenceClient'
 import {
   clampLatitude,
@@ -28,17 +24,11 @@ interface StaticWorldMapProps {
   selectedPopup?: ReactNode
 }
 
-const worldBounds = L.latLngBounds([
-  [-85, 0],
-  [85, 360],
-])
-
-const lightingBandStyles: Record<MapLightingBand, L.PathOptions> = {
-  day: { fillColor: '#ffdd8e', fillOpacity: 0.22 },
-  'civil-twilight': { fillColor: '#8797c4', fillOpacity: 0.22 },
-  'nautical-twilight': { fillColor: '#314a7a', fillOpacity: 0.26 },
-  'astronomical-twilight': { fillColor: '#15244e', fillOpacity: 0.3 },
-  night: { fillColor: '#040c22', fillOpacity: 0.42 },
+const nightRegionStyle: L.PathOptions = {
+  fillColor: '#040c22',
+  fillOpacity: 0.42,
+  interactive: false,
+  stroke: false,
 }
 
 function getViewState(map: LeafletMap) {
@@ -47,62 +37,15 @@ function getViewState(map: LeafletMap) {
   return {
     center: {
       latitudeDeg: clampLatitude(center.lat),
-      longitudeDeg: normalizeLongitude(fromDisplayLongitude(center.lng)),
+      longitudeDeg: normalizeLongitude(center.lng),
     },
     minZoom: map.getMinZoom(),
     zoom: map.getZoom(),
   }
 }
 
-function toDisplayLongitude(longitudeDeg: number): number {
-  const normalizedLongitude = normalizeLongitude(longitudeDeg)
-
-  return normalizedLongitude < 0 ? normalizedLongitude + 360 : normalizedLongitude
-}
-
-function fromDisplayLongitude(longitudeDeg: number): number {
-  return longitudeDeg > 180 ? longitudeDeg - 360 : longitudeDeg
-}
-
-function constrainMapToWorldBounds(map: LeafletMap): void {
-  const center = map.getCenter()
-  const nextCenter = getViewportContainedCenter(map)
-
-  if (
-    Math.abs(center.lat - nextCenter.lat) < 0.000001 &&
-    Math.abs(center.lng - nextCenter.lng) < 0.000001
-  ) {
-    return
-  }
-
-  map.setView(nextCenter, map.getZoom(), { animate: false })
-}
-
-function getViewportContainedCenter(map: LeafletMap): LatLng {
-  const zoom = map.getZoom()
-  const size = map.getSize()
-  const northWest = map.project(worldBounds.getNorthWest(), zoom)
-  const southEast = map.project(worldBounds.getSouthEast(), zoom)
-  const center = map.project(map.getCenter(), zoom)
-  const halfWidth = size.x / 2
-  const halfHeight = size.y / 2
-
-  const minX = northWest.x + halfWidth
-  const maxX = southEast.x - halfWidth
-  const minY = northWest.y + halfHeight
-  const maxY = southEast.y - halfHeight
-
-  return map.unproject(
-    L.point({
-      x: minX > maxX ? (northWest.x + southEast.x) / 2 : clamp(center.x, minX, maxX),
-      y: minY > maxY ? (northWest.y + southEast.y) / 2 : clamp(center.y, minY, maxY),
-    }),
-    zoom,
-  )
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.min(Math.max(value, minimum), maximum)
+function toDisplayLongitude(longitudeDeg: number, worldCenterLongitudeDeg: number): number {
+  return worldCenterLongitudeDeg + normalizeLongitude(longitudeDeg - worldCenterLongitudeDeg)
 }
 
 function applyMinimumNonWrappingZoom(map: LeafletMap, container: HTMLDivElement): void {
@@ -113,8 +56,6 @@ function applyMinimumNonWrappingZoom(map: LeafletMap, container: HTMLDivElement)
   if (map.getZoom() < minimumZoom) {
     map.setZoom(minimumZoom, { animate: false })
   }
-
-  constrainMapToWorldBounds(map)
 }
 
 function shouldPreferCanvasRenderer(): boolean {
@@ -136,6 +77,12 @@ export function StaticWorldMap({
   const presenceLayerRef = useRef<LayerGroup | null>(null)
   const [snapshotAt] = useState(() => new Date())
   const [initialCenter] = useState(() => getDarknessCenter(snapshotAt))
+  const [worldBounds] = useState(() =>
+    L.latLngBounds([
+      [-85, initialCenter.longitudeDeg - 180],
+      [85, initialCenter.longitudeDeg + 180],
+    ]),
+  )
   const onCoordinateSelectRef = useRef(onCoordinateSelect)
   const selectedCoordinateRef = useRef(selectedCoordinate)
   const [selectedPopupPosition, setSelectedPopupPosition] = useState<{
@@ -173,10 +120,7 @@ export function StaticWorldMap({
       worldCopyJump: false,
       zoomControl: false,
     })
-    map.setView(
-      [initialCenter.latitudeDeg, toDisplayLongitude(initialCenter.longitudeDeg)],
-      map.getMinZoom(),
-    )
+    map.setView([initialCenter.latitudeDeg, initialCenter.longitudeDeg], map.getMinZoom())
     applyMinimumNonWrappingZoom(map, container)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -191,9 +135,10 @@ export function StaticWorldMap({
     presenceLayerRef.current = L.layerGroup().addTo(map)
 
     const updateViewState = () => {
-      constrainMapToWorldBounds(map)
       setViewState(getViewState(map))
-      setSelectedPopupPosition(getSelectedPopupPosition(map, selectedCoordinateRef.current))
+      setSelectedPopupPosition(
+        getSelectedPopupPosition(map, selectedCoordinateRef.current, initialCenter.longitudeDeg),
+      )
     }
     const updateMinimumZoom = () => {
       applyMinimumNonWrappingZoom(map, container)
@@ -205,7 +150,7 @@ export function StaticWorldMap({
       setSelectedPopupPosition({ x: event.containerPoint.x, y: event.containerPoint.y })
       onCoordinateSelectRef.current?.({
         latitudeDeg: clampLatitude(event.latlng.lat),
-        longitudeDeg: normalizeLongitude(fromDisplayLongitude(event.latlng.lng)),
+        longitudeDeg: normalizeLongitude(event.latlng.lng),
       })
     })
 
@@ -221,7 +166,7 @@ export function StaticWorldMap({
       markerLayerRef.current = null
       presenceLayerRef.current = null
     }
-  }, [initialCenter.latitudeDeg, initialCenter.longitudeDeg])
+  }, [initialCenter.latitudeDeg, initialCenter.longitudeDeg, worldBounds])
 
   useEffect(() => {
     if (!focusRequest) {
@@ -235,13 +180,15 @@ export function StaticWorldMap({
     }
 
     map.setView(
-      [focusRequest.center.latitudeDeg, toDisplayLongitude(focusRequest.center.longitudeDeg)],
+      [
+        focusRequest.center.latitudeDeg,
+        toDisplayLongitude(focusRequest.center.longitudeDeg, initialCenter.longitudeDeg),
+      ],
       Math.max(focusRequest.zoom, map.getMinZoom()),
       { animate: false },
     )
-    constrainMapToWorldBounds(map)
     setViewState(getViewState(map))
-  }, [focusRequest])
+  }, [focusRequest, initialCenter.longitudeDeg])
 
   useEffect(() => {
     const layer = lightingLayerRef.current
@@ -256,26 +203,13 @@ export function StaticWorldMap({
       return
     }
 
-    createLightingCells(snapshotAt, nightAltitudeThresholdDeg).forEach((cell) => {
-      const actualWest = cell.x - 180
-      const west = toDisplayLongitude(actualWest)
-      const east = west + cell.width
-      const north = 90 - cell.y
-      const south = north - cell.height
+    const boundary = createNightBoundary(snapshotAt, nightAltitudeThresholdDeg).map((point) => [
+      point.latitudeDeg,
+      toDisplayLongitude(point.longitudeDeg, initialCenter.longitudeDeg),
+    ]) as L.LatLngExpression[]
 
-      L.rectangle(
-        [
-          [south, west],
-          [north, east],
-        ],
-        {
-          ...lightingBandStyles[cell.band],
-          interactive: false,
-          stroke: false,
-        },
-      ).addTo(layer)
-    })
-  }, [nightAltitudeThresholdDeg, snapshotAt])
+    L.polygon(boundary, nightRegionStyle).addTo(layer)
+  }, [initialCenter.longitudeDeg, nightAltitudeThresholdDeg, snapshotAt])
 
   useEffect(() => {
     const layer = markerLayerRef.current
@@ -291,7 +225,10 @@ export function StaticWorldMap({
     }
 
     L.marker(
-      [selectedCoordinate.latitudeDeg, toDisplayLongitude(selectedCoordinate.longitudeDeg)],
+      [
+        selectedCoordinate.latitudeDeg,
+        toDisplayLongitude(selectedCoordinate.longitudeDeg, initialCenter.longitudeDeg),
+      ],
       {
         icon: L.divIcon({
           className: styles.selectedMarker,
@@ -300,7 +237,7 @@ export function StaticWorldMap({
         interactive: false,
       },
     ).addTo(layer)
-  }, [selectedCoordinate])
+  }, [initialCenter.longitudeDeg, selectedCoordinate])
 
   useEffect(() => {
     const layer = presenceLayerRef.current
@@ -312,15 +249,18 @@ export function StaticWorldMap({
     layer.clearLayers()
 
     presenceCells.forEach((cell) => {
-      L.marker([cell.latitudeDeg, toDisplayLongitude(cell.longitudeDeg)], {
-        icon: L.divIcon({
-          className: styles.presencePin,
-          html: cell.members.length > 1 ? String(cell.members.length) : '',
-        }),
-        interactive: false,
-      }).addTo(layer)
+      L.marker(
+        [cell.latitudeDeg, toDisplayLongitude(cell.longitudeDeg, initialCenter.longitudeDeg)],
+        {
+          icon: L.divIcon({
+            className: styles.presencePin,
+            html: cell.members.length > 1 ? String(cell.members.length) : '',
+          }),
+          interactive: false,
+        },
+      ).addTo(layer)
     })
-  }, [presenceCells])
+  }, [initialCenter.longitudeDeg, presenceCells])
 
   const zoomIn = useCallback(() => {
     const map = mapRef.current
@@ -333,7 +273,6 @@ export function StaticWorldMap({
       const nextZoom = Math.min(current.zoom + 1, maxMapZoom)
 
       map.setZoom(nextZoom, { animate: false })
-      constrainMapToWorldBounds(map)
 
       return { ...getViewState(map), zoom: nextZoom }
     })
@@ -349,7 +288,6 @@ export function StaticWorldMap({
       const nextZoom = Math.max(current.zoom - 1, current.minZoom)
 
       map.setZoom(nextZoom, { animate: false })
-      constrainMapToWorldBounds(map)
 
       return { ...getViewState(map), zoom: nextZoom }
     })
@@ -361,14 +299,9 @@ export function StaticWorldMap({
       return
     }
 
-    map.setView(
-      [initialCenter.latitudeDeg, toDisplayLongitude(initialCenter.longitudeDeg)],
-      map.getMinZoom(),
-      {
-        animate: false,
-      },
-    )
-    constrainMapToWorldBounds(map)
+    map.setView([initialCenter.latitudeDeg, initialCenter.longitudeDeg], map.getMinZoom(), {
+      animate: false,
+    })
     setViewState(getViewState(map))
   }, [initialCenter])
   return (
@@ -404,6 +337,7 @@ export function StaticWorldMap({
 function getSelectedPopupPosition(
   map: LeafletMap | null,
   coordinate: GeoCoordinate | null,
+  worldCenterLongitudeDeg: number,
 ): { x: number; y: number } | null {
   if (!map || !coordinate) {
     return null
@@ -411,7 +345,7 @@ function getSelectedPopupPosition(
 
   const point = map.latLngToContainerPoint([
     coordinate.latitudeDeg,
-    toDisplayLongitude(coordinate.longitudeDeg),
+    toDisplayLongitude(coordinate.longitudeDeg, worldCenterLongitudeDeg),
   ])
 
   return { x: point.x, y: point.y }

@@ -12,6 +12,9 @@ describe('StaticWorldMap', () => {
   it('renders the token-free Leaflet world map', () => {
     render(<StaticWorldMap nightAltitudeThresholdDeg={-18} />)
 
+    expect(document.querySelectorAll('.leaflet-overlay-pane path')).toHaveLength(1)
+    expect(document.querySelectorAll('.leaflet-overlay-pane rect')).toHaveLength(0)
+
     expect(screen.getByLabelText('세계지도 영역')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '확대' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '축소' })).toBeDisabled()

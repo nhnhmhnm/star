@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { createLightingCells, getMapLightingBand } from './mapLighting'
+import {
+  createLightingCells,
+  createNightBoundary,
+  getDarknessCenter,
+  getMapLightingBand,
+} from './mapLighting'
+import { calculateSolarAltitudeDeg } from '../night-eligibility/nightEligibility'
 
 describe('mapLighting', () => {
   it('uses one identical night band for every altitude below the configured threshold', () => {
@@ -28,5 +34,24 @@ describe('mapLighting', () => {
         height: 1,
       }),
     )
+  })
+
+  it('centers the night region on the point opposite the sun', () => {
+    const observedAt = new Date('2026-03-20T12:00:00.000Z')
+    const center = getDarknessCenter(observedAt)
+
+    expect(calculateSolarAltitudeDeg(center, observedAt)).toBeCloseTo(-90, 6)
+  })
+
+  it('creates a smooth boundary at the configured solar altitude', () => {
+    const observedAt = new Date('2026-09-16T03:00:00.000Z')
+    const boundary = createNightBoundary(observedAt, -18)
+
+    expect(boundary).toHaveLength(360)
+    boundary
+      .filter((_, index) => index % 45 === 0)
+      .forEach((point) => {
+        expect(calculateSolarAltitudeDeg(point, observedAt)).toBeCloseTo(-18, 6)
+      })
   })
 })

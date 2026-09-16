@@ -1,4 +1,5 @@
 import {
+  calculateAntisolarCoordinate,
   calculateSolarAltitudeDeg,
   type GeographicCoordinates,
 } from '../night-eligibility/nightEligibility'
@@ -17,6 +18,10 @@ export interface LightingCell {
 
 const longitudeStepDeg = 1
 const latitudeStepDeg = 1
+const degToRad = Math.PI / 180
+const radToDeg = 180 / Math.PI
+
+export interface NightBoundaryPoint extends GeographicCoordinates {}
 
 export function getMapLightingBand(
   solarAltitudeDeg: number,
@@ -71,19 +76,43 @@ export function createLightingCells(
 }
 
 export function getDarknessCenter(observedAt: Date): GeographicCoordinates {
-  let darkestCoordinate: GeographicCoordinates = { latitudeDeg: 0, longitudeDeg: 180 }
-  let lowestSolarAltitudeDeg = Number.POSITIVE_INFINITY
+  return calculateAntisolarCoordinate(observedAt)
+}
 
-  for (let latitudeDeg = -88; latitudeDeg <= 88; latitudeDeg += 2) {
-    for (let longitudeDeg = -180; longitudeDeg < 180; longitudeDeg += 2) {
-      const solarAltitudeDeg = calculateSolarAltitudeDeg({ latitudeDeg, longitudeDeg }, observedAt)
-
-      if (solarAltitudeDeg < lowestSolarAltitudeDeg) {
-        lowestSolarAltitudeDeg = solarAltitudeDeg
-        darkestCoordinate = { latitudeDeg, longitudeDeg }
-      }
-    }
+export function createNightBoundary(
+  observedAt: Date,
+  nightAltitudeThresholdDeg: number,
+  segmentCount = 360,
+): NightBoundaryPoint[] {
+  if (segmentCount < 36 || !Number.isInteger(segmentCount)) {
+    throw new RangeError('Night boundary segment count must be an integer of at least 36.')
   }
 
-  return darkestCoordinate
+  const center = getDarknessCenter(observedAt)
+  const centerLatitudeRad = center.latitudeDeg * degToRad
+  const centerLongitudeRad = center.longitudeDeg * degToRad
+  const angularRadiusRad = (90 + nightAltitudeThresholdDeg) * degToRad
+
+  return Array.from({ length: segmentCount }, (_, index) => {
+    const bearingRad = (index / segmentCount) * Math.PI * 2
+    const latitudeRad = Math.asin(
+      Math.sin(centerLatitudeRad) * Math.cos(angularRadiusRad) +
+        Math.cos(centerLatitudeRad) * Math.sin(angularRadiusRad) * Math.cos(bearingRad),
+    )
+    const longitudeRad =
+      centerLongitudeRad +
+      Math.atan2(
+        Math.sin(bearingRad) * Math.sin(angularRadiusRad) * Math.cos(centerLatitudeRad),
+        Math.cos(angularRadiusRad) - Math.sin(centerLatitudeRad) * Math.sin(latitudeRad),
+      )
+
+    return {
+      latitudeDeg: latitudeRad * radToDeg,
+      longitudeDeg: normalizeLongitude(longitudeRad * radToDeg),
+    }
+  })
+}
+
+function normalizeLongitude(longitudeDeg: number): number {
+  return ((((longitudeDeg + 180) % 360) + 360) % 360) - 180
 }

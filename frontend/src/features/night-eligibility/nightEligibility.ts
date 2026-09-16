@@ -37,6 +37,34 @@ export function calculateSolarAltitudeDeg(
   assertValidCoordinates({ latitudeDeg, longitudeDeg })
   assertValidDate(observedAt)
 
+  const { declinationRad, equationOfTimeMinutes, utcMinutes } = calculateSolarTerms(observedAt)
+  const trueSolarTimeMinutes = normalizeMinutes(
+    utcMinutes + equationOfTimeMinutes + 4 * longitudeDeg,
+  )
+  const hourAngleDeg =
+    trueSolarTimeMinutes / 4 < 0 ? trueSolarTimeMinutes / 4 + 180 : trueSolarTimeMinutes / 4 - 180
+  const latitudeRad = latitudeDeg * degToRad
+  const cosineSolarZenith =
+    Math.sin(latitudeRad) * Math.sin(declinationRad) +
+    Math.cos(latitudeRad) * Math.cos(declinationRad) * Math.cos(hourAngleDeg * degToRad)
+  const solarZenithRad = Math.acos(clamp(cosineSolarZenith, -1, 1))
+
+  return 90 - solarZenithRad * radToDeg
+}
+
+export function calculateAntisolarCoordinate(observedAt: Date): GeographicCoordinates {
+  assertValidDate(observedAt)
+
+  const { declinationRad, equationOfTimeMinutes, utcMinutes } = calculateSolarTerms(observedAt)
+  const subsolarLongitudeDeg = normalizeLongitudeDeg((720 - utcMinutes - equationOfTimeMinutes) / 4)
+
+  return {
+    latitudeDeg: -declinationRad * radToDeg,
+    longitudeDeg: normalizeLongitudeDeg(subsolarLongitudeDeg + 180),
+  }
+}
+
+function calculateSolarTerms(observedAt: Date) {
   // NOAA's compact solar position approximation is accurate enough for UX gating.
   // Backend config remains the authority for the altitude threshold itself.
   const julianDay = observedAt.getTime() / millisecondsPerDay + unixEpochJulianDay
@@ -84,18 +112,8 @@ export function calculateSolarAltitudeDeg(
     observedAt.getUTCMinutes() +
     observedAt.getUTCSeconds() / 60 +
     observedAt.getUTCMilliseconds() / 60_000
-  const trueSolarTimeMinutes = normalizeMinutes(
-    utcMinutes + equationOfTimeMinutes + 4 * longitudeDeg,
-  )
-  const hourAngleDeg =
-    trueSolarTimeMinutes / 4 < 0 ? trueSolarTimeMinutes / 4 + 180 : trueSolarTimeMinutes / 4 - 180
-  const latitudeRad = latitudeDeg * degToRad
-  const solarZenithRad = Math.acos(
-    Math.sin(latitudeRad) * Math.sin(declinationRad) +
-      Math.cos(latitudeRad) * Math.cos(declinationRad) * Math.cos(hourAngleDeg * degToRad),
-  )
 
-  return 90 - solarZenithRad * radToDeg
+  return { declinationRad, equationOfTimeMinutes, utcMinutes }
 }
 
 function normalizeDegrees(value: number): number {
@@ -104,6 +122,14 @@ function normalizeDegrees(value: number): number {
 
 function normalizeMinutes(value: number): number {
   return ((value % 1_440) + 1_440) % 1_440
+}
+
+function normalizeLongitudeDeg(value: number): number {
+  return ((((value + 180) % 360) + 360) % 360) - 180
+}
+
+function clamp(value: number, minimum: number, maximum: number): number {
+  return Math.min(Math.max(value, minimum), maximum)
 }
 
 function assertValidCoordinates({ latitudeDeg, longitudeDeg }: GeographicCoordinates): void {
