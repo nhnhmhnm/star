@@ -19,11 +19,11 @@ export function AppShell({ activePath, canOpenSky, children }: AppShellProps) {
         <nav className={styles.nav} aria-label="주요 화면">
           <a
             className={styles.navLink}
-            href="/"
-            aria-current={activePath === '/' ? 'page' : undefined}
+            href="/map"
+            aria-current={activePath === '/map' ? 'page' : undefined}
             onClick={(event) => {
               event.preventDefault()
-              navigateTo('/')
+              navigateTo('/map')
             }}
           >
             세계지도

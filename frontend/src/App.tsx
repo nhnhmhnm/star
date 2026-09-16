@@ -6,6 +6,7 @@ import { useObservationState } from './app/observation/useObservation'
 import { navigateTo } from './app/routing/navigation'
 import { useRoute } from './app/routing/useRoute'
 import { getNightEligibility } from './features/night-eligibility/nightEligibility'
+import { LandingPage } from './pages/LandingPage'
 import { SkyViewerPage } from './pages/SkyViewerPage'
 import { WorldMapPage } from './pages/WorldMapPage'
 import { fetchPublicAppConfig, type PublicAppConfig } from './shared/api/publicConfig'
@@ -60,9 +61,13 @@ function RoutedApp() {
 
   useEffect(() => {
     if (route.path === '/sky' && !selectedLocationCanOpenSky) {
-      navigateTo('/')
+      navigateTo('/map')
     }
   }, [route.path, selectedLocationCanOpenSky])
+
+  if (route.path === '/') {
+    return <LandingPage />
+  }
 
   const shouldShowSky =
     route.path === '/sky' &&
@@ -71,7 +76,7 @@ function RoutedApp() {
     selectedLocationCanOpenSky
 
   return (
-    <AppShell activePath={shouldShowSky ? '/sky' : '/'} canOpenSky={selectedLocationCanOpenSky}>
+    <AppShell activePath={shouldShowSky ? '/sky' : '/map'} canOpenSky={selectedLocationCanOpenSky}>
       {shouldShowSky ? (
         <SkyViewerPage config={config} selectedLocation={selectedLocation} />
       ) : (

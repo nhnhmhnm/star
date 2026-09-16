@@ -1,0 +1,155 @@
+.page {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  overflow: hidden;
+  padding: 32px;
+  isolation: isolate;
+  background: #07101e url('/images/landing-night-sky.png') center / cover no-repeat;
+}
+
+.shade {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 42%, rgb(5 12 26 / 12%) 0%, rgb(3 8 18 / 40%) 55%),
+    linear-gradient(180deg, rgb(2 7 16 / 8%) 45%, rgb(2 6 13 / 50%) 100%);
+}
+
+.introCard {
+  display: flex;
+  width: min(100%, 520px);
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid rgb(224 234 255 / 20%);
+  border-radius: 28px;
+  padding: 44px 44px 38px;
+  background: linear-gradient(145deg, rgb(8 17 35 / 76%), rgb(7 14 29 / 58%));
+  box-shadow:
+    0 30px 90px rgb(0 0 0 / 46%),
+    inset 0 1px 0 rgb(255 255 255 / 8%);
+  text-align: center;
+  backdrop-filter: blur(16px) saturate(115%);
+}
+
+.eyebrow {
+  margin: 0 0 16px;
+  color: #9fb7dd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+}
+
+.introCard h1 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(42px, 7vw, 64px);
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  text-shadow: 0 4px 28px rgb(97 145 223 / 28%);
+}
+
+.description {
+  margin: 22px 0 0;
+  color: rgb(232 238 249 / 82%);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.guide {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  color: rgb(197 211 233 / 72%);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.guide span:nth-child(2) {
+  color: #d9bd78;
+}
+
+.enterButton {
+  display: flex;
+  width: 100%;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 34px;
+  border: 1px solid rgb(231 204 139 / 48%);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #e9cd91, #b89552);
+  box-shadow: 0 12px 36px rgb(0 0 0 / 28%);
+  color: #111726;
+  font-size: 15px;
+  font-weight: 900;
+  text-decoration: none;
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
+}
+
+.enterButton:hover {
+  box-shadow: 0 16px 44px rgb(0 0 0 / 38%);
+  filter: brightness(1.07);
+  transform: translateY(-2px);
+}
+
+.enterButton:focus-visible {
+  outline: 3px solid rgb(190 216 255 / 75%);
+  outline-offset: 4px;
+}
+
+.enterButton span {
+  font-size: 17px;
+  transition: transform 160ms ease;
+}
+
+.enterButton:hover span {
+  transform: translate(2px, -2px);
+}
+
+.caption {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  margin: 0;
+  color: rgb(218 228 244 / 56%);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px;
+    background-position: 62% center;
+  }
+
+  .introCard {
+    border-radius: 22px;
+    padding: 34px 24px 28px;
+  }
+
+  .description {
+    font-size: 14px;
+  }
+
+  .caption {
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enterButton,
+  .enterButton span {
+    transition: none;
+  }
+}

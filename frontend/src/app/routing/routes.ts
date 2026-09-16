@@ -1,5 +1,9 @@
-export type AppPath = '/' | '/sky'
+export type AppPath = '/' | '/map' | '/sky'
 
 export function parseAppPath(pathname: string): AppPath {
-  return pathname === '/sky' ? '/sky' : '/'
+  if (pathname === '/map' || pathname === '/sky') {
+    return pathname
+  }
+
+  return '/'
 }
