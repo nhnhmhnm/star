@@ -76,12 +76,12 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
       sky.panHorizontal(event.key === 'ArrowLeft' ? -10 : 10)
     }
 
-    if (event.key === '+' || event.key === '=') {
+    if (event.key === 'ArrowUp') {
       event.preventDefault()
       sky.zoomIn()
     }
 
-    if (event.key === '-') {
+    if (event.key === 'ArrowDown') {
       event.preventDefault()
       sky.zoomOut()
     }
@@ -99,7 +99,7 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
           className={styles.interactionSurface}
           role="application"
           tabIndex={0}
-          aria-label="밤하늘 수평 탐색 영역. 좌우로 드래그하고 휠로 확대하거나 축소합니다."
+          aria-label="밤하늘 수평 탐색 영역. 좌우로 드래그하고 위아래 방향키나 휠로 확대하거나 축소합니다."
           onKeyDown={controlWithKeyboard}
           onPointerCancel={stopHorizontalDrag}
           onPointerDown={startHorizontalDrag}
@@ -125,10 +125,10 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
                 className={styles.controlButton}
                 onClick={sky.zoomOut}
                 disabled={sky.view.fovDeg >= skyFovBounds.maximumDeg}
-                aria-label="축소"
-                title="축소"
+                aria-label="축소, 아래 방향키"
+                title="축소 (↓)"
               >
-                −
+                ↓
               </button>
               <button
                 type="button"
@@ -144,10 +144,10 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
                 className={styles.controlButton}
                 onClick={sky.zoomIn}
                 disabled={sky.view.fovDeg <= skyFovBounds.minimumDeg}
-                aria-label="확대"
-                title="확대"
+                aria-label="확대, 위 방향키"
+                title="확대 (↑)"
               >
-                +
+                ↑
               </button>
               <span className={styles.fovValue}>FOV {Math.round(sky.view.fovDeg)}°</span>
             </div>
