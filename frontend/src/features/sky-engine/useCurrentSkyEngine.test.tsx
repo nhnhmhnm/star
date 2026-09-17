@@ -43,6 +43,9 @@ function TestViewer({
       <p>FOV {sky.view.fovDeg}</p>
       <p>lines {String(sky.constellationLayers.linesVisible)}</p>
       <p>labels {String(sky.constellationLayers.labelsVisible)}</p>
+      <button type="button" onClick={() => sky.panHorizontal(45)}>
+        pan right
+      </button>
       <button type="button" onClick={sky.zoomIn}>
         zoom in
       </button>
@@ -74,6 +77,7 @@ function createFakeEngine(initialFovDeg = 70): SkyEngine {
     resetView: vi.fn(() => {
       fovDeg = 70
     }),
+    setAzimuthDeg: vi.fn(),
     setConstellationLayers: vi.fn((nextLayers) => {
       constellationLayers = nextLayers
     }),
@@ -124,6 +128,18 @@ describe('useCurrentSkyEngine', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'reset' }))
     expect(engine.resetView).toHaveBeenCalledOnce()
+  })
+
+  it('exposes horizontal panning without changing sky altitude', async () => {
+    const engine = createFakeEngine()
+    const createEngine = vi.fn<() => Promise<SkyEngine>>().mockResolvedValue(engine)
+
+    render(<TestViewer createEngine={createEngine} location={nightLocation} />)
+
+    expect(await screen.findByText('ready')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'pan right' }))
+
+    expect(engine.setAzimuthDeg).toHaveBeenCalledWith(45)
   })
 
   it('exposes independent constellation line and label toggles', async () => {

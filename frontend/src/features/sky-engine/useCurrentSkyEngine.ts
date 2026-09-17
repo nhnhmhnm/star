@@ -19,6 +19,7 @@ export interface CurrentSkyState {
   message: string
   constellationLayers: SkyConstellationLayers
   view: SkyViewState
+  panHorizontal(deltaDeg: number): void
   resetView(): void
   retry(): void
   setConstellationLabelsVisible(visible: boolean): void
@@ -37,7 +38,7 @@ interface UseCurrentSkyEngineOptions {
 const initialConstellationLayers = { labelsVisible: true, linesVisible: true }
 const initialSkyView = {
   altitudeDeg: skyAltitudeBounds.fixedDeg,
-  azimuthDeg: 0,
+  azimuthDeg: 180,
   fovDeg: skyFovBounds.initialDeg,
 }
 
@@ -54,6 +55,7 @@ export function useCurrentSkyEngine({
     message: 'Stellarium engine is loading.',
     constellationLayers: initialConstellationLayers,
     view: initialSkyView,
+    panHorizontal: () => undefined,
     resetView: () => undefined,
     retry: () => undefined,
     setConstellationLabelsVisible: () => undefined,
@@ -87,6 +89,19 @@ export function useCurrentSkyEngine({
       }
 
       engine.setFovDeg(engine.getView().fovDeg + deltaDeg)
+      syncEngineState()
+    },
+    [syncEngineState],
+  )
+  const panHorizontal = useCallback(
+    (deltaDeg: number) => {
+      const engine = engineRef.current
+
+      if (!engine) {
+        return
+      }
+
+      engine.setAzimuthDeg(engine.getView().azimuthDeg + deltaDeg)
       syncEngineState()
     },
     [syncEngineState],
@@ -172,6 +187,7 @@ export function useCurrentSkyEngine({
           message: formatBlockedMessage(entryCheck.solarAltitudeDeg, nightAltitudeThresholdDeg),
           constellationLayers: initialConstellationLayers,
           view: initialSkyView,
+          panHorizontal,
           resetView,
           retry,
           setConstellationLabelsVisible,
@@ -209,6 +225,7 @@ export function useCurrentSkyEngine({
             ),
             constellationLayers: initialConstellationLayers,
             view: initialSkyView,
+            panHorizontal,
             resetView,
             retry,
             setConstellationLabelsVisible,
@@ -227,6 +244,7 @@ export function useCurrentSkyEngine({
           message: 'The current sky is rendering.',
           constellationLayers: engine.getConstellationLayers(),
           view: engine.getView(),
+          panHorizontal,
           resetView,
           retry,
           setConstellationLabelsVisible,
@@ -245,6 +263,7 @@ export function useCurrentSkyEngine({
           message: error instanceof Error ? error.message : 'Stellarium engine failed to load.',
           constellationLayers: initialConstellationLayers,
           view: initialSkyView,
+          panHorizontal,
           resetView,
           retry,
           setConstellationLabelsVisible,
@@ -277,6 +296,7 @@ export function useCurrentSkyEngine({
     location.latitudeDeg,
     location.longitudeDeg,
     nightAltitudeThresholdDeg,
+    panHorizontal,
     resetView,
     retry,
     setConstellationLabelsVisible,

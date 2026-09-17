@@ -7,6 +7,7 @@ export interface SkyEngine {
   getView(): SkyViewState
   resetView(): void
   setConstellationLayers(layers: SkyConstellationLayers): void
+  setAzimuthDeg(azimuthDeg: number): void
   setFovDeg(fovDeg: number): void
   syncCurrentTime(observedAt?: Date): void
   startRealtimeSync(): void
@@ -69,7 +70,7 @@ interface StellariumModule {
 
 const initialFovDeg = 70
 const initialAltitudeDeg = 45
-const initialAzimuthDeg = 0
+const initialAzimuthDeg = 180
 const viewAngleToleranceDeg = 0.1
 export const skyFovBounds = {
   minimumDeg: 20,
@@ -176,6 +177,10 @@ class StellariumAdapter implements SkyEngine {
     this.engine.zoomTo(clampedFovDeg * this.engine.D2R, 0)
   }
 
+  setAzimuthDeg(azimuthDeg: number): void {
+    this.engine.observer.yaw = normalizeAzimuthDeg(azimuthDeg) * this.engine.D2R
+  }
+
   resetView(): void {
     this.engine.observer.yaw = initialAzimuthDeg * this.engine.D2R
     this.engine.observer.pitch = initialAltitudeDeg * this.engine.D2R
@@ -193,6 +198,8 @@ class StellariumAdapter implements SkyEngine {
     if (Math.abs(currentAltitudeDeg - skyAltitudeBounds.fixedDeg) > viewAngleToleranceDeg) {
       this.engine.observer.pitch = skyAltitudeBounds.fixedDeg * this.engine.D2R
     }
+
+    this.setAzimuthDeg(this.engine.observer.yaw / this.engine.D2R)
   }
 
   startRealtimeSync(): void {

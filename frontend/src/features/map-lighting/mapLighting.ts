@@ -21,7 +21,7 @@ const latitudeStepDeg = 1
 const degToRad = Math.PI / 180
 const radToDeg = 180 / Math.PI
 
-export interface NightBoundaryPoint extends GeographicCoordinates {}
+export type NightBoundaryPoint = GeographicCoordinates
 
 export function getMapLightingBand(
   solarAltitudeDeg: number,

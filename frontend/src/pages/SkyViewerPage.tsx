@@ -1,6 +1,10 @@
-import { useRef } from 'react'
+import { useRef, type KeyboardEvent, type PointerEvent, type WheelEvent } from 'react'
 
 import type { SelectedObservationLocation } from '../app/observation/observationState'
+import {
+  getCardinalDirectionCode,
+  getCompassDirectionWindow,
+} from '../features/sky-engine/skyCompass'
 import { useCurrentSkyEngine } from '../features/sky-engine/useCurrentSkyEngine'
 import { normalizeAzimuthDeg, skyFovBounds } from '../features/sky-engine/StellariumAdapter'
 import type { PublicAppConfig } from '../shared/api/publicConfig'
@@ -13,6 +17,7 @@ interface SkyViewerPageProps {
 
 export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const horizontalDragRef = useRef<{ pointerId: number; x: number } | null>(null)
   const sky = useCurrentSkyEngine({
     canvasRef,
     location: selectedLocation,
@@ -21,6 +26,67 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
   const canvasClassName =
     sky.status === 'ready' ? styles.canvas : `${styles.canvas} ${styles.canvasHidden}`
 
+  function startHorizontalDrag(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+      return
+    }
+
+    event.currentTarget.setPointerCapture(event.pointerId)
+    horizontalDragRef.current = { pointerId: event.pointerId, x: event.clientX }
+  }
+
+  function moveHorizontalDrag(event: PointerEvent<HTMLDivElement>) {
+    const drag = horizontalDragRef.current
+
+    if (!drag || drag.pointerId !== event.pointerId) {
+      return
+    }
+
+    const deltaX = event.clientX - drag.x
+    const degreesPerPixel = sky.view.fovDeg / Math.max(event.currentTarget.clientWidth, 1)
+
+    horizontalDragRef.current = { ...drag, x: event.clientX }
+    sky.panHorizontal(-deltaX * degreesPerPixel)
+  }
+
+  function stopHorizontalDrag(event: PointerEvent<HTMLDivElement>) {
+    if (horizontalDragRef.current?.pointerId !== event.pointerId) {
+      return
+    }
+
+    horizontalDragRef.current = null
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+  }
+
+  function zoomWithWheel(event: WheelEvent<HTMLDivElement>) {
+    event.preventDefault()
+
+    if (event.deltaY < 0) {
+      sky.zoomIn()
+    } else if (event.deltaY > 0) {
+      sky.zoomOut()
+    }
+  }
+
+  function controlWithKeyboard(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault()
+      sky.panHorizontal(event.key === 'ArrowLeft' ? -10 : 10)
+    }
+
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault()
+      sky.zoomIn()
+    }
+
+    if (event.key === '-') {
+      event.preventDefault()
+      sky.zoomOut()
+    }
+  }
+
   return (
     <section className={styles.page} aria-labelledby="sky-title">
       <canvas
@@ -28,6 +94,20 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
         aria-label={`${selectedLocation.label} 현재 밤하늘`}
         className={canvasClassName}
       />
+      {sky.status === 'ready' ? (
+        <div
+          className={styles.interactionSurface}
+          role="application"
+          tabIndex={0}
+          aria-label="밤하늘 수평 탐색 영역. 좌우로 드래그하고 휠로 확대하거나 축소합니다."
+          onKeyDown={controlWithKeyboard}
+          onPointerCancel={stopHorizontalDrag}
+          onPointerDown={startHorizontalDrag}
+          onPointerMove={moveHorizontalDrag}
+          onPointerUp={stopHorizontalDrag}
+          onWheel={zoomWithWheel}
+        />
+      ) : null}
       <div className={styles.statusPanel}>
         <p className={styles.eyebrow}>{selectedLocation.label}</p>
         <h1 className={styles.title} id="sky-title">
@@ -100,6 +180,7 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
           </>
         ) : null}
       </div>
+      {sky.status === 'ready' ? <SkyCompass azimuthDeg={sky.view.azimuthDeg} /> : null}
       {sky.status !== 'ready' ? (
         <div className={styles.overlay} role="status" aria-live="polite">
           <p className={styles.overlayTitle}>{formatSkyStatusTitle(sky.status)}</p>
@@ -117,22 +198,32 @@ export function SkyViewerPage({ config, selectedLocation }: SkyViewerPageProps) 
   )
 }
 
+function SkyCompass({ azimuthDeg }: { azimuthDeg: number }) {
+  const activeDirection = getCardinalDirectionCode(azimuthDeg)
+  const visibleDirections = getCompassDirectionWindow(azimuthDeg)
+
+  return (
+    <div className={styles.compass} aria-label={`현재 방위 ${activeDirection}`}>
+      <div className={styles.compassMarker} aria-hidden="true" />
+      <div className={styles.compassDirections}>
+        {visibleDirections.map((direction) => (
+          <span
+            key={direction}
+            className={direction === activeDirection ? styles.activeDirection : undefined}
+          >
+            {direction}
+          </span>
+        ))}
+      </div>
+      <p>{Math.round(normalizeAzimuthDeg(azimuthDeg))}° · 좌우로 드래그</p>
+    </div>
+  )
+}
+
 function formatCardinalDirection(azimuthDeg: number): string {
-  const normalizedAzimuthDeg = normalizeAzimuthDeg(azimuthDeg)
+  const labels = { N: '북', E: '동', S: '남', W: '서' }
 
-  if (normalizedAzimuthDeg >= 315 || normalizedAzimuthDeg < 45) {
-    return '북'
-  }
-
-  if (normalizedAzimuthDeg < 135) {
-    return '동'
-  }
-
-  if (normalizedAzimuthDeg < 225) {
-    return '남'
-  }
-
-  return '서'
+  return labels[getCardinalDirectionCode(azimuthDeg)]
 }
 
 function formatSkyStatusTitle(status: ReturnType<typeof useCurrentSkyEngine>['status']): string {
